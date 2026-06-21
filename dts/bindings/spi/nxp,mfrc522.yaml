@@ -1,0 +1,11 @@
+description: NXP MFRC522 13.56 MHz RFID reader
+
+compatible: "nxp,mfrc522"
+
+include: [spi-device.yaml, reset-device.yaml]
+
+properties:
+  reset-gpios:
+    type: phandle-array
+    required: true
+    description: Active-low hardware reset pin
