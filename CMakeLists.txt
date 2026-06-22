@@ -10,7 +10,13 @@ file(GLOB_RECURSE SOURCE_FILES
     ${CMAKE_CURRENT_LIST_DIR}/src/*.c
 )
 
+file(GLOB_RECURSE HEADER_FILES
+    ${CMAKE_CURRENT_LIST_DIR}/includes/*/*.h
+)
+
 target_sources(app PRIVATE ${SOURCE_FILES})
+
+include_directories(${HEADER_FILES})
 
 target_include_directories(app PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/includes

@@ -18,8 +18,8 @@
  *
  *******************************************************************/
 
-#ifndef WIFI_H
-#define WIFI_H
+#ifndef SERVICES_WIFI_H
+#define SERVICES_WIFI_H
 
 #include <zephyr/zbus/zbus.h>
 
@@ -49,4 +49,4 @@ struct wifi_state_msg {
 ZBUS_CHAN_DECLARE(wifi_cmd_chan);
 ZBUS_CHAN_DECLARE(wifi_state_chan);
 
-#endif /* WIFI_H */
+#endif /* SERVICES_WIFI_H */
