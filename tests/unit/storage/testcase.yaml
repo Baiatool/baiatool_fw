@@ -1,0 +1,8 @@
+tests:
+  unit.storage:
+    platform_allow:
+      - mps2/an385
+    tags:
+      - simulated
+      - storage
+      - unit

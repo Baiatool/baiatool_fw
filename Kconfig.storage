@@ -1,0 +1,12 @@
+module = STORAGE
+module-str = storage
+source "subsys/logging/Kconfig.template.log_config"
+
+menu "Storage"
+    config FLASH_INIT_PRIORITY
+        int "Priority of flash initialization."
+        default 50
+        help
+            Set the priority of the flash initialization.
+            Lower values have higher priority and are initialized first.
+endmenu
