@@ -1,0 +1,36 @@
+menu "Wi-Fi configuration"
+
+    config WIFI_SSID_MAX_LEN
+        int "Maximum length of Wi-Fi SSID"
+        default 32
+        help
+          This option sets the maximum length of Wi-Fi SSID that can be stored in the system. 
+          The default value is 32 characters, which is the maximum length defined by the IEEE 802.11 standard for SSID.
+
+    config WIFI_PSK_MAX_LEN
+        int "Maximum length of Wi-Fi PSK"
+        default 64
+        help
+          This option sets the maximum length of Wi-Fi Pre-Shared Key (PSK) that can be stored in the system. 
+          The default value is 64 characters, which is the maximum length defined by the IEEE 802.11 standard for WPA2-PSK.
+
+    config WIFI_THREAD_STACK_SIZE
+        int "Wi-Fi thread stack size"
+        default 2048
+        help
+          This option sets the stack size for the Wi-Fi thread. 
+          The default value is 2048 bytes, which should be sufficient for most Wi-Fi operations. 
+          Adjust this value if you encounter stack overflow issues or if your application requires more stack space for Wi-Fi operations.
+
+    config WIFI_THREAD_PRIORITY
+        int "Wi-Fi thread priority"
+        default 5
+        help
+          This option sets the priority for the Wi-Fi thread. 
+          The default value is 5, which is a moderate priority level. 
+          Adjust this value based on the requirements of your application and the priorities of other threads in your system.
+endmenu
+
+module = WIFI
+module-str = wifi
+source "subsys/logging/Kconfig.template.log_config"
