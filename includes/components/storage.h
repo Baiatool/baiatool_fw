@@ -11,10 +11,11 @@
  *
  * @brief Definition of storage component, responsible for store data in non-volatile memory.
  * @author José Félix de Oliveira Neto (josefelix.neto@edge.ufal.br)
- * @version 0.1
- * @date 03/12/2025
+ * @author Joao Matheus Nascimento Dias (joao.dias@edge.ufal.br)
+ * @version 0.2
+ * @date 21/06/2026
  *
- * @copyright Copyright (c) 2025
+ * @copyright Copyright (c) 2026
  *
  *******************************************************************/
 
@@ -33,12 +34,12 @@
  */
 enum baiatool_storage_id {
     BAIATOOL_NULL_NVS_ID = 0,       /**< ID invalid for NVS */
-    BAIATOOL_AUTHENTICATION_NVS_ID, /**< ID of the NVS for authentication data */
     BAIATOOL_SCHEDULE_NVS_ID,       /**< ID of the NVS for the current schedule data */
     BAIATOOL_PROVISIONING_NVS_ID,   /**< ID of the NVS for the provisioning data */
     BAIATOOL_NET_SETTINGS_NVS_ID,   /**< ID of the NVS for the network settings */
     BAIATOOL_NVS_ID_AMOUNT          /**< Amount of NVS IDs */
 };
+
 
 /**
  * @brief Function to add a new object to the flash memory.
