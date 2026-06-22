@@ -29,6 +29,21 @@ menu "Wi-Fi configuration"
           This option sets the priority for the Wi-Fi thread. 
           The default value is 5, which is a moderate priority level. 
           Adjust this value based on the requirements of your application and the priorities of other threads in your system.
+
+    config WIFI_SHELL_MONITOR_POLL_MS
+        int "Wi-Fi shell monitor poll interval (ms)"
+        default 500
+        help
+          This option sets the poll interval for the Wi-Fi shell monitor command. 
+          The default value is 500 ms, which provides a good balance between responsiveness and system load.
+
+    config WIFI_SHELL_MONITOR_TIMEOUT
+        int "Wi-Fi shell monitor timeout (iterations)"
+        default 120
+        help
+          This option sets the timeout for the Wi-Fi shell monitor command. 
+          The default value is 120 iterations, which corresponds to 60 seconds with the default poll interval.
+
 endmenu
 
 module = WIFI

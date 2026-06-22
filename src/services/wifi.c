@@ -19,13 +19,46 @@
  *******************************************************************/
 
 #include <string.h>
+#include <strings.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/net/net_if.h>
 #include <zephyr/net/net_mgmt.h>
 #include <zephyr/net/wifi_mgmt.h>
 
+#include "esp_err.h"
+#include "esp_wifi.h"
+#include "esp_wps.h"
+
 #include "services/wifi.h"
+
+/*
+ * Static pool for z_strdup — the WPS/wpa_supplicant library requires this
+ * symbol but the Zephyr ESP32 HAL port (zephyr/port/wifi/wpa_supplicant/
+ * os_xtensa.c) does not define it.  A fixed-size ring buffer satisfies the
+ * no-dynamic-allocation rule; STRDUP_SLOTS concurrent live copies are
+ * supported before the oldest entry is silently recycled.
+ */
+#define STRDUP_SLOTS     8
+#define STRDUP_SLOT_SIZE 128
+
+static char strdup_pool[STRDUP_SLOTS][STRDUP_SLOT_SIZE];
+static uint8_t strdup_idx;
+
+char *z_strdup(const char *s)
+{
+	char *p = strdup_pool[strdup_idx % STRDUP_SLOTS];
+
+	strdup_idx++;
+	strncpy(p, s, STRDUP_SLOT_SIZE - 1);
+	p[STRDUP_SLOT_SIZE - 1] = '\0';
+	return p;
+}
+
+int z_strcasecmp(const char *s1, const char *s2)
+{
+	return strcasecmp(s1, s2);
+}
 
 LOG_MODULE_REGISTER(wifi, CONFIG_WIFI_LOG_LEVEL);
 
@@ -41,11 +74,20 @@ ZBUS_CHAN_DEFINE(wifi_state_chan, struct wifi_state_msg, NULL, NULL, ZBUS_OBSERV
 
 static struct net_if *wifi_iface;
 static struct net_mgmt_event_callback wifi_evt_cb;
+static enum wifi_baiatool_state current_state = WIFI_BAIATOOL_STATE_DISCONNECTED;
+
+/*
+ * @note: Set when WPS starts WiFi directly via the HAL (ESP32 driver does not
+ * implement the net_mgmt wps_config op).  Cleared in wifi_do_connect after
+ * stopping WiFi so that the driver can restart it cleanly through net_mgmt.
+ */
+static bool wps_pending;
 
 static inline void publish_state(enum wifi_baiatool_state state)
 {
 	struct wifi_state_msg msg = {.state = state};
 
+	current_state = state;
 	zbus_chan_pub(&wifi_state_chan, &msg, K_MSEC(100));
 }
 
@@ -72,8 +114,13 @@ static void wifi_event_handler(struct net_mgmt_event_callback *cb, uint64_t mgmt
 		break;
 
 	case NET_EVENT_WIFI_DISCONNECT_RESULT:
-		LOG_INF("Disconnected");
-		publish_state(WIFI_BAIATOOL_STATE_DISCONNECTED);
+		if (current_state == WIFI_BAIATOOL_STATE_CONNECTING) {
+			LOG_ERR("Connect failed (no AP or auth error)");
+			publish_state(WIFI_BAIATOOL_STATE_FAILED);
+		} else {
+			LOG_INF("Disconnected");
+			publish_state(WIFI_BAIATOOL_STATE_DISCONNECTED);
+		}
 		break;
 
 	default:
@@ -91,6 +138,14 @@ static inline void wifi_do_connect(const char *ssid, const char *psk)
 	struct wifi_connect_req_params params = {0};
 	int ret;
 
+	if (wps_pending) {
+		/* WiFi was started directly via the HAL for WPS, so the Zephyr
+		 * driver's esp_wifi_start() guard would reject the next connect
+		 * request.  Stop WiFi first to reset driver state. */
+		esp_wifi_stop();
+		wps_pending = false;
+	}
+
 	params.ssid = (const uint8_t *)ssid;
 	params.ssid_length = (uint8_t)strlen(ssid);
 	params.channel = WIFI_CHANNEL_ANY;
@@ -107,26 +162,109 @@ static inline void wifi_do_connect(const char *ssid, const char *psk)
 	}
 
 	publish_state(WIFI_BAIATOOL_STATE_CONNECTING);
+	LOG_INF("Connecting to SSID: %s", ssid);
 
 	ret = net_mgmt(NET_REQUEST_WIFI_CONNECT, wifi_iface, &params,
 		       sizeof(struct wifi_connect_req_params));
 	if (ret) {
-		LOG_ERR("Connect request failed: %d", ret);
+		LOG_ERR("Connect request rejected: %d", ret);
 		publish_state(WIFI_BAIATOOL_STATE_FAILED);
 	}
 }
 
+/*
+ * @note: esp_event_post intercepts WPS events posted by the wpa_supplicant layer.
+ * The Zephyr ESP32 port does not compile esp_event.c, so this shim provides
+ * the symbol and routes WPS outcomes back through the Zephyr stack.
+ *
+ * On success: credentials extracted from the WPS result are published as a
+ * WIFI_CMD_CONNECT message so the wifi thread completes the association via
+ * net_mgmt (the normal, driver-managed path).
+ *
+ * On failure/timeout: WiFi is stopped to reset Zephyr driver state so that
+ * subsequent net_mgmt connect requests succeed.
+ */
+esp_err_t esp_event_post(esp_event_base_t event_base, int32_t event_id,
+			 const void *event_data, size_t event_data_size,
+			 uint32_t ticks_to_wait)
+{
+	ARG_UNUSED(ticks_to_wait);
+
+	if (event_base != WIFI_EVENT) {
+		return ESP_OK;
+	}
+
+	switch (event_id) {
+	case WIFI_EVENT_STA_WPS_ER_SUCCESS: {
+		const wifi_event_sta_wps_er_success_t *wps = event_data;
+		struct wifi_cmd_msg cmd = {.type = WIFI_CMD_CONNECT};
+
+		if (wps && event_data_size >= sizeof(*wps)) {
+			strncpy(cmd.ssid, (const char *)wps->ap_cred[0].ssid,
+				CONFIG_WIFI_SSID_MAX_LEN);
+			cmd.ssid[CONFIG_WIFI_SSID_MAX_LEN] = '\0';
+			strncpy(cmd.psk, (const char *)wps->ap_cred[0].passphrase,
+				CONFIG_WIFI_PSK_MAX_LEN);
+			cmd.psk[CONFIG_WIFI_PSK_MAX_LEN] = '\0';
+		}
+		esp_wifi_wps_disable();
+		wps_pending = true;
+		zbus_chan_pub(&wifi_cmd_chan, &cmd, K_MSEC(500));
+		LOG_INF("WPS success, connecting");
+		break;
+	}
+	case WIFI_EVENT_STA_WPS_ER_FAILED:
+		LOG_ERR("WPS failed");
+		esp_wifi_wps_disable();
+		esp_wifi_stop();
+		publish_state(WIFI_BAIATOOL_STATE_FAILED);
+		break;
+	case WIFI_EVENT_STA_WPS_ER_TIMEOUT:
+		LOG_ERR("WPS timeout");
+		esp_wifi_wps_disable();
+		esp_wifi_stop();
+		publish_state(WIFI_BAIATOOL_STATE_FAILED);
+		break;
+	default:
+		break;
+	}
+
+	return ESP_OK;
+}
+
 static inline void wifi_do_connect_wps(void)
 {
-	struct wifi_wps_config_params params = {.oper = WIFI_WPS_PBC};
+	/* WPS_CONFIG_INIT_DEFAULT needs CONFIG_IDF_TARGET (absent in Zephyr); zero
+	 * factory_info fields use ESP-IDF defaults per struct field documentation. */
+	esp_wps_config_t config = {.wps_type = WPS_TYPE_PBC};
 	int ret;
 
 	publish_state(WIFI_BAIATOOL_STATE_CONNECTING);
 
-	ret = net_mgmt(NET_REQUEST_WIFI_WPS_CONFIG, wifi_iface, &params,
-		       sizeof(struct wifi_wps_config_params));
-	if (ret) {
-		LOG_ERR("WPS PBC request failed: %d", ret);
+	/* @note: net_mgmt has no WPS support on ESP32: the driver does not implement
+	 * the wps_config op (NET_REQUEST_WIFI_WPS_CONFIG returns -ENOTSUP).
+	 * WiFi must be started via the HAL before enabling WPS; the credential
+	 * exchange is handled by esp_event_post above, which re-routes the
+	 * association back through net_mgmt once credentials are obtained. */
+	esp_wifi_set_mode(ESP32_WIFI_MODE_STA);
+	ret = esp_wifi_start();
+	if (ret != ESP_OK && ret != ESP_ERR_WIFI_CONN) {
+		LOG_ERR("WPS: WiFi start failed: %d", ret);
+		publish_state(WIFI_BAIATOOL_STATE_FAILED);
+		return;
+	}
+
+	ret = esp_wifi_wps_enable(&config);
+	if (ret != ESP_OK) {
+		LOG_ERR("WPS enable failed: %d", ret);
+		publish_state(WIFI_BAIATOOL_STATE_FAILED);
+		return;
+	}
+
+	ret = esp_wifi_wps_start(0);
+	if (ret != ESP_OK) {
+		LOG_ERR("WPS start failed: %d", ret);
+		esp_wifi_wps_disable();
 		publish_state(WIFI_BAIATOOL_STATE_FAILED);
 		return;
 	}

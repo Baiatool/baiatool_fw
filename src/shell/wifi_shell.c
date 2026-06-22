@@ -96,11 +96,44 @@ static int cmd_wifi_status(const struct shell *sh, size_t argc, char **argv)
 	return 0;
 }
 
+static int cmd_wifi_monitor(const struct shell *sh, size_t argc, char **argv)
+{
+	ARG_UNUSED(argc);
+	ARG_UNUSED(argv);
+
+	struct wifi_state_msg state;
+	enum wifi_baiatool_state last = (enum wifi_baiatool_state)-1;
+
+	shell_print(sh, "Monitoring WiFi state (60 s)...");
+
+	for (int i = 0; i < CONFIG_WIFI_SHELL_MONITOR_TIMEOUT; i++) {
+		if (zbus_chan_read(&wifi_state_chan, &state, K_MSEC(100))) {
+			k_sleep(K_MSEC(CONFIG_WIFI_SHELL_MONITOR_POLL_MS));
+			continue;
+		}
+
+		if (state.state != last) {
+			last = state.state;
+			shell_print(sh, "WiFi: %s", state_to_str(state.state));
+
+			if (state.state == WIFI_BAIATOOL_STATE_CONNECTED ||
+			    state.state == WIFI_BAIATOOL_STATE_FAILED) {
+				break;
+			}
+		}
+
+		k_sleep(K_MSEC(CONFIG_WIFI_SHELL_MONITOR_POLL_MS));
+	}
+
+	return 0;
+}
+
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	wifi_cmds, SHELL_CMD_ARG(connect, NULL, "<ssid> [password]", cmd_wifi_connect, 2, 1),
 	SHELL_CMD_ARG(wps, NULL, "connect via WPS PBC", cmd_wifi_wps, 1, 0),
 	SHELL_CMD_ARG(disconnect, NULL, "disconnect from AP", cmd_wifi_disconnect, 1, 0),
 	SHELL_CMD_ARG(status, NULL, "show connection state", cmd_wifi_status, 1, 0),
+	SHELL_CMD_ARG(monitor, NULL, "watch state changes (60 s)", cmd_wifi_monitor, 1, 0),
 	SHELL_SUBCMD_SET_END);
 
 SHELL_CMD_REGISTER(wifi, &wifi_cmds, "WiFi management", NULL);
