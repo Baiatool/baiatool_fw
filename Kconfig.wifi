@@ -1,5 +1,4 @@
 menu "Wi-Fi configuration"
-
     config WIFI_SSID_MAX_LEN
         int "Maximum length of Wi-Fi SSID"
         default 32
@@ -30,6 +29,14 @@ menu "Wi-Fi configuration"
           The default value is 5, which is a moderate priority level. 
           Adjust this value based on the requirements of your application and the priorities of other threads in your system.
 
+    config WIFI_CMD_SUB_QUEUE_SIZE
+        int "Wi-Fi zbubs command queue size of subscribers"
+        default 4
+        help
+          This option sets the size of the sub-queue for Wi-Fi commands. 
+          The default value is 10, which should be sufficient for most applications. 
+          Adjust this value if you encounter issues with command processing or if your application requires a larger or smaller queue.
+
     config WIFI_SHELL_MONITOR_POLL_MS
         int "Wi-Fi shell monitor poll interval (ms)"
         default 500
@@ -43,7 +50,6 @@ menu "Wi-Fi configuration"
         help
           This option sets the timeout for the Wi-Fi shell monitor command. 
           The default value is 120 iterations, which corresponds to 60 seconds with the default poll interval.
-
 endmenu
 
 module = WIFI

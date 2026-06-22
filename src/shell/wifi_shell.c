@@ -45,7 +45,7 @@ static const char *state_to_str(enum wifi_baiatool_state state)
 
 static int cmd_wifi_connect(const struct shell *sh, size_t argc, char **argv)
 {
-	struct wifi_cmd_msg cmd = {.type = WIFI_CMD_CONNECT};
+	struct wifi_cmd_msg cmd = {.type = WIFI_CMD_CONNECT, .persist = true};
 
 	strncpy(cmd.ssid, argv[1], CONFIG_WIFI_SSID_MAX_LEN);
 	cmd.ssid[CONFIG_WIFI_SSID_MAX_LEN] = '\0';

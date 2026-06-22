@@ -18,8 +18,6 @@
  *
  *******************************************************************/
 
-#include <string.h>
-#include <strings.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/net/net_if.h>
@@ -30,7 +28,13 @@
 #include "esp_wifi.h"
 #include "esp_wps.h"
 
+#include "components/storage.h"
 #include "services/wifi.h"
+
+struct wifi_credentials {
+	char ssid[CONFIG_WIFI_SSID_MAX_LEN + 1];
+	char psk[CONFIG_WIFI_PSK_MAX_LEN + 1];
+};
 
 /*
  * Static pool for z_strdup — the WPS/wpa_supplicant library requires this
@@ -57,14 +61,14 @@ char *z_strdup(const char *s)
 
 int z_strcasecmp(const char *s1, const char *s2)
 {
-	return strcasecmp(s1, s2);
+	return z_strcasecmp(s1, s2);
 }
 
 LOG_MODULE_REGISTER(wifi, CONFIG_WIFI_LOG_LEVEL);
 
 #define WIFI_EVENT_MASK (NET_EVENT_WIFI_CONNECT_RESULT | NET_EVENT_WIFI_DISCONNECT_RESULT)
 
-ZBUS_SUBSCRIBER_DEFINE(wifi_cmd_sub, 4);
+ZBUS_SUBSCRIBER_DEFINE(wifi_cmd_sub, CONFIG_WIFI_CMD_SUB_QUEUE_SIZE);
 
 ZBUS_CHAN_DEFINE(wifi_cmd_chan, struct wifi_cmd_msg, NULL, NULL, ZBUS_OBSERVERS(wifi_cmd_sub),
 		 ZBUS_MSG_INIT(.type = WIFI_CMD_DISCONNECT));
@@ -115,7 +119,7 @@ static void wifi_event_handler(struct net_mgmt_event_callback *cb, uint64_t mgmt
 
 	case NET_EVENT_WIFI_DISCONNECT_RESULT:
 		if (current_state == WIFI_BAIATOOL_STATE_CONNECTING) {
-			LOG_ERR("Connect failed (no AP or auth error)");
+			LOG_ERR("Connection failed: invalid SSID or password");
 			publish_state(WIFI_BAIATOOL_STATE_FAILED);
 		} else {
 			LOG_INF("Disconnected");
@@ -128,11 +132,44 @@ static void wifi_event_handler(struct net_mgmt_event_callback *cb, uint64_t mgmt
 	}
 }
 
-/**
- * TODO: When the storage service is implemented, this function should be modified to retrieve the
- * SSID and PSK, or credentials, from the storage instead of receiving them as parameters. @JoaoMatheusND
- *
- */
+static inline void wifi_do_connect(const char *ssid, const char *psk);
+
+static void wifi_save_credentials(enum baiatool_storage_id id, const char *ssid, const char *psk)
+{
+	struct wifi_credentials creds;
+
+	strncpy(creds.ssid, ssid, CONFIG_WIFI_SSID_MAX_LEN);
+	creds.ssid[CONFIG_WIFI_SSID_MAX_LEN] = '\0';
+	strncpy(creds.psk, psk, CONFIG_WIFI_PSK_MAX_LEN);
+	creds.psk[CONFIG_WIFI_PSK_MAX_LEN] = '\0';
+
+	if (baiatool_storage_update(id, &creds, sizeof(creds)) < 0) {
+		LOG_ERR("Failed to save credentials (id=%u)", id);
+	}
+}
+
+static void wifi_auto_connect(void)
+{
+	struct wifi_credentials creds;
+	ssize_t ret;
+
+	ret = baiatool_storage_read(BAIATOOL_PROVISIONING_NVS_ID, &creds, sizeof(creds));
+	if (ret > 0) {
+		LOG_INF("WPS credentials found, connecting to %s", creds.ssid);
+		wifi_do_connect(creds.ssid, creds.psk);
+		return;
+	}
+
+	ret = baiatool_storage_read(BAIATOOL_NET_SETTINGS_NVS_ID, &creds, sizeof(creds));
+	if (ret > 0) {
+		LOG_INF("Stored credentials found, connecting to %s", creds.ssid);
+		wifi_do_connect(creds.ssid, creds.psk);
+		return;
+	}
+
+	LOG_WRN("No wifi connection data available");
+}
+
 static inline void wifi_do_connect(const char *ssid, const char *psk)
 {
 	struct wifi_connect_req_params params = {0};
@@ -184,9 +221,8 @@ static inline void wifi_do_connect(const char *ssid, const char *psk)
  * On failure/timeout: WiFi is stopped to reset Zephyr driver state so that
  * subsequent net_mgmt connect requests succeed.
  */
-esp_err_t esp_event_post(esp_event_base_t event_base, int32_t event_id,
-			 const void *event_data, size_t event_data_size,
-			 uint32_t ticks_to_wait)
+esp_err_t esp_event_post(esp_event_base_t event_base, int32_t event_id, const void *event_data,
+			 size_t event_data_size, uint32_t ticks_to_wait)
 {
 	ARG_UNUSED(ticks_to_wait);
 
@@ -206,11 +242,12 @@ esp_err_t esp_event_post(esp_event_base_t event_base, int32_t event_id,
 			strncpy(cmd.psk, (const char *)wps->ap_cred[0].passphrase,
 				CONFIG_WIFI_PSK_MAX_LEN);
 			cmd.psk[CONFIG_WIFI_PSK_MAX_LEN] = '\0';
+			wifi_save_credentials(BAIATOOL_PROVISIONING_NVS_ID, cmd.ssid, cmd.psk);
 		}
 		esp_wifi_wps_disable();
 		wps_pending = true;
 		zbus_chan_pub(&wifi_cmd_chan, &cmd, K_MSEC(500));
-		LOG_INF("WPS success, connecting");
+		LOG_INF("WPS success, connecting to %s", cmd.ssid);
 		break;
 	}
 	case WIFI_EVENT_STA_WPS_ER_FAILED:
@@ -301,6 +338,7 @@ static void wifi_cmd_thread_fn(void *p1, void *p2, void *p3)
 	net_mgmt_add_event_callback(&wifi_evt_cb);
 
 	LOG_INF("WiFi service ready");
+	wifi_auto_connect();
 
 	while (!zbus_sub_wait(&wifi_cmd_sub, &chan, K_FOREVER)) {
 		struct wifi_cmd_msg cmd;
@@ -311,6 +349,10 @@ static void wifi_cmd_thread_fn(void *p1, void *p2, void *p3)
 
 		switch (cmd.type) {
 		case WIFI_CMD_CONNECT:
+			if (cmd.persist) {
+				wifi_save_credentials(BAIATOOL_NET_SETTINGS_NVS_ID, cmd.ssid,
+						      cmd.psk);
+			}
 			wifi_do_connect(cmd.ssid, cmd.psk);
 			break;
 		case WIFI_CMD_CONNECT_WPS:
