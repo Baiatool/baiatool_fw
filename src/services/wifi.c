@@ -24,9 +24,9 @@
 #include <zephyr/net/net_mgmt.h>
 #include <zephyr/net/wifi_mgmt.h>
 
-#include "esp_err.h"
-#include "esp_wifi.h"
-#include "esp_wps.h"
+#include <esp_err.h>
+#include <esp_wifi.h>
+#include <esp_wps.h>
 
 #include "components/storage.h"
 #include "services/wifi.h"
