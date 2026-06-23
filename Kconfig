@@ -4,6 +4,7 @@ endmenu
 
 rsource "Kconfig.storage"
 rsource "Kconfig.wifi" 
+rsource "Kconfig.led"
 
 module = MAIN
 module-str = main
