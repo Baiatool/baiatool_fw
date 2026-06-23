@@ -45,13 +45,56 @@ static inline int http_do_request(int sock, enum http_method method, const char 
 	return http_client_req(sock, &req, timeout_ms, user_data);
 }
 
-/* GET — pass NULL/0U for _ct/_payload/_payload_len when no body is needed */
+/**
+ * @brief Send an HTTP GET request.
+ *
+ * Convenience wrapper around @ref http_do_request with method pre-set to
+ * HTTP_GET. Pass NULL and 0U for @p _ct, @p _payload and
+ * @p _payload_len when no request body is needed.
+ *
+ * @param _sock        Connected socket file descriptor.
+ * @param _host        Server hostname string.
+ * @param _port        Server port string.
+ * @param _url         Request path.
+ * @param _ct          Content-Type header value, or NULL.
+ * @param _payload     Request body, or NULL.
+ * @param _payload_len Length of @p _payload, or 0U.
+ * @param _cb          Response callback (http_response_cb_t).
+ * @param _buf         Caller-provided receive buffer.
+ * @param _buf_len     Size of @p _buf in bytes.
+ * @param _timeout_ms  Receive timeout in milliseconds.
+ * @param _user_data   Opaque pointer forwarded to @p _cb.
+ *
+ * @retval >=0 Number of bytes sent on success.
+ * @retval <0  Negative errno on failure.
+ */
 #define HTTP_REQ_GET(_sock, _host, _port, _url, _ct, _payload, _payload_len, _cb, _buf, _buf_len,  \
 		     _timeout_ms, _user_data)                                                      \
 	http_do_request((_sock), HTTP_GET, (_host), (_port), (_url), (_ct), (_payload),            \
 			(_payload_len), (_cb), (_buf), (_buf_len), (_timeout_ms), (_user_data))
 
-/* POST — same signature as GET, method pre-filled */
+/**
+ * @brief Send an HTTP POST request.
+ *
+ * Convenience wrapper around @ref http_do_request with method pre-set to
+ * HTTP_POST. Same parameter list as @ref HTTP_REQ_GET.
+ *
+ * @param _sock        Connected socket file descriptor.
+ * @param _host        Server hostname string.
+ * @param _port        Server port string.
+ * @param _url         Request path.
+ * @param _ct          Content-Type header value, or NULL.
+ * @param _payload     Request body, or NULL.
+ * @param _payload_len Length of @p _payload, or 0U.
+ * @param _cb          Response callback (http_response_cb_t).
+ * @param _buf         Caller-provided receive buffer.
+ * @param _buf_len     Size of @p _buf in bytes.
+ * @param _timeout_ms  Receive timeout in milliseconds.
+ * @param _user_data   Opaque pointer forwarded to @p _cb.
+ *
+ * @retval >=0 Number of bytes sent on success.
+ * @retval <0  Negative errno on failure.
+ */
 #define HTTP_REQ_POST(_sock, _host, _port, _url, _ct, _payload, _payload_len, _cb, _buf, _buf_len, \
 		      _timeout_ms, _user_data)                                                     \
 	http_do_request((_sock), HTTP_POST, (_host), (_port), (_url), (_ct), (_payload),           \
