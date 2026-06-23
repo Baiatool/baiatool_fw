@@ -55,6 +55,6 @@ int esp32_wps_start(esp32_wps_result_cb_t cb);
  *
  * Safe to call even if WPS was never started (no-op in that case).
  */
-void esp32_wps_stop(void);
+int esp32_wps_stop(void);
 
 #endif /* DRIVERS_ESP32_WPS_H_ */

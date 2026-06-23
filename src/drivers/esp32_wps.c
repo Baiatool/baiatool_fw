@@ -45,9 +45,9 @@ static bool wps_wifi_started;
  * Wraps esp_event_post (--wrap=esp_event_post) to intercept WPS events
  * before forwarding to the HAL stub (__real_esp_event_post → esp_wifi_event_handler).
  */
-extern esp_err_t __real_esp_event_post(esp_event_base_t event_base, int32_t event_id,
-				       const void *event_data, size_t event_data_size,
-				       uint32_t ticks_to_wait);
+esp_err_t __real_esp_event_post(esp_event_base_t event_base, int32_t event_id,
+				const void *event_data, size_t event_data_size,
+				uint32_t ticks_to_wait);
 
 esp_err_t __wrap_esp_event_post(esp_event_base_t event_base, int32_t event_id,
 				const void *event_data, size_t event_data_size,
@@ -57,6 +57,8 @@ esp_err_t __wrap_esp_event_post(esp_event_base_t event_base, int32_t event_id,
 		return __real_esp_event_post(event_base, event_id, event_data, event_data_size,
 					     ticks_to_wait);
 	}
+
+	int ret = 0;
 
 	switch (event_id) {
 	case WIFI_EVENT_STA_WPS_ER_SUCCESS: {
@@ -80,7 +82,7 @@ esp_err_t __wrap_esp_event_post(esp_event_base_t event_base, int32_t event_id,
 	case WIFI_EVENT_STA_WPS_ER_FAILED:
 		LOG_ERR("WPS failed");
 		esp_wifi_wps_disable();
-		esp32_wps_stop();
+		ret = esp32_wps_stop();
 		if (wps_result_cb) {
 			wps_result_cb("", "", -EIO);
 		}
@@ -88,7 +90,7 @@ esp_err_t __wrap_esp_event_post(esp_event_base_t event_base, int32_t event_id,
 	case WIFI_EVENT_STA_WPS_ER_TIMEOUT:
 		LOG_ERR("WPS timeout");
 		esp_wifi_wps_disable();
-		esp32_wps_stop();
+		ret = esp32_wps_stop();
 		if (wps_result_cb) {
 			wps_result_cb("", "", -ETIMEDOUT);
 		}
@@ -98,7 +100,7 @@ esp_err_t __wrap_esp_event_post(esp_event_base_t event_base, int32_t event_id,
 					     ticks_to_wait);
 	}
 
-	return ESP_OK;
+	return ret;
 }
 
 int esp32_wps_start(esp32_wps_result_cb_t cb)
@@ -125,7 +127,12 @@ int esp32_wps_start(esp32_wps_result_cb_t cb)
 	ret = esp_wifi_wps_enable(&config);
 	if (ret != ESP_OK) {
 		LOG_ERR("WPS enable failed: %d", ret);
-		esp32_wps_stop();
+
+		ret = esp32_wps_stop();
+		if (ret != ESP_OK) {
+			LOG_ERR("WPS stop failed: %d", ret);
+		}
+
 		return -EIO;
 	}
 
@@ -133,19 +140,24 @@ int esp32_wps_start(esp32_wps_result_cb_t cb)
 	if (ret != ESP_OK) {
 		LOG_ERR("WPS start failed: %d", ret);
 		esp_wifi_wps_disable();
-		esp32_wps_stop();
+
+		ret = esp32_wps_stop();
+		if (ret != ESP_OK) {
+			LOG_ERR("WPS stop failed: %d", ret);
+		}
+
 		return -EIO;
 	}
 
 	return 0;
 }
 
-void esp32_wps_stop(void)
+int esp32_wps_stop(void)
 {
 	if (!wps_wifi_started) {
-		return;
+		return ESP_OK;
 	}
 
-	esp_wifi_stop();
 	wps_wifi_started = false;
+	return esp_wifi_stop();
 }

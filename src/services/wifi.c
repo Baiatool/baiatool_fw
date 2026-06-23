@@ -23,11 +23,11 @@
 #include <zephyr/net/net_if.h>
 #include <zephyr/net/net_mgmt.h>
 #include <zephyr/net/wifi_mgmt.h>
+#include <esp_err.h>
 
 #include "components/storage.h"
 #include "drivers/esp32_wps.h"
 #include "services/wifi.h"
-
 
 LOG_MODULE_REGISTER(wifi, CONFIG_WIFI_LOG_LEVEL);
 
@@ -139,7 +139,12 @@ static inline void wifi_do_connect(const char *ssid, const char *psk)
 	int ret;
 
 	/* Stop HAL WiFi if WPS left it running; no-op otherwise. */
-	esp32_wps_stop();
+	ret = esp32_wps_stop();
+
+	if (ret != ESP_OK) {
+		LOG_ERR("Failed to stop WPS WiFi: %d", ret);
+		publish_state(WIFI_BAIATOOL_STATE_FAILED);
+	}
 
 	params.ssid = (const uint8_t *)ssid;
 	params.ssid_length = (uint8_t)strlen(ssid);
@@ -178,10 +183,19 @@ static void wps_result_cb(const char *ssid, const char *psk, int err)
 
 	strncpy(cmd.ssid, ssid, CONFIG_WIFI_SSID_MAX_LEN);
 	cmd.ssid[CONFIG_WIFI_SSID_MAX_LEN] = '\0';
+
 	strncpy(cmd.psk, psk, CONFIG_WIFI_PSK_MAX_LEN);
 	cmd.psk[CONFIG_WIFI_PSK_MAX_LEN] = '\0';
+
 	wifi_save_credentials(BAIATOOL_PROVISIONING_NVS_ID, cmd.ssid, cmd.psk);
-	zbus_chan_pub(&wifi_cmd_chan, &cmd, K_MSEC(500));
+
+	err = zbus_chan_pub(&wifi_cmd_chan, &cmd, K_MSEC(500));
+	if (err < 0) {
+		LOG_ERR("Failed to publish WPS connect command: %d", err);
+		publish_state(WIFI_BAIATOOL_STATE_FAILED);
+		return;
+	}
+
 	LOG_INF("WPS success, connecting to %s", cmd.ssid);
 }
 
