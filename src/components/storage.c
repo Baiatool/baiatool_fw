@@ -51,7 +51,11 @@ ssize_t baiatool_storage_read(enum baiatool_storage_id nvs_id, void *data, size_
 		return ret;
 	}
 
-	LOG_ERR("Failed to read object with id %u: %d", nvs_id, ret);
+	if (ret == -ENOENT) {
+		LOG_DBG("No object with ID = %u", nvs_id);
+	} else {
+		LOG_ERR("Failed to read object with id %u: %d", nvs_id, ret);
+	}
 
 	return -ENODATA;
 }
