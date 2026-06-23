@@ -15,3 +15,5 @@ target_sources(app PRIVATE ${SOURCE_FILES})
 target_include_directories(app PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/includes
 )
+
+target_link_options(app PRIVATE -Wl,--wrap=esp_event_post)
