@@ -14,4 +14,4 @@ manifest:
           - hal_espressif
           - lvgl
           - mbedtls
-          - zcbor
+          - tf-psa-crypto
