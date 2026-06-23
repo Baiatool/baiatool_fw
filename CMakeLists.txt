@@ -17,3 +17,9 @@ target_include_directories(app PRIVATE
 )
 
 target_link_options(app PRIVATE -Wl,--wrap=esp_event_post)
+
+# tf-psa-crypto extras/md.c has unused-parameter warnings that become errors
+# via zephyr_interface; suppress them for that target only.
+if(TARGET extras)
+  target_compile_options(extras PRIVATE -Wno-unused-parameter)
+endif()
