@@ -20,8 +20,6 @@
 
 #if CONFIG_SHELL
 
-#include <errno.h>
-#include <string.h>
 #include <zephyr/kernel.h>
 #include <zephyr/net/net_ip.h>
 #include <zephyr/net/socket.h>
@@ -127,8 +125,8 @@ static int cmd_http_get(const struct shell *sh, size_t argc, char **argv)
 		return sock;
 	}
 
-	ret = HTTP_REQ_GET(sock, host, port, url, NULL, NULL, 0U, response_cb, recv_buf,
-			   sizeof(recv_buf), HTTP_SHELL_TIMEOUT_MS, (void *)sh);
+	ret = HTTP_REQ(HTTP_GET, sock, host, port, url, NULL, NULL, 0U, response_cb, recv_buf,
+		       sizeof(recv_buf), HTTP_SHELL_TIMEOUT_MS, (void *)sh);
 	if (ret < 0) {
 		shell_error(sh, "HTTP GET failed: %d", ret);
 	}
@@ -153,8 +151,8 @@ static int cmd_http_post(const struct shell *sh, size_t argc, char **argv)
 		return sock;
 	}
 
-	ret = HTTP_REQ_POST(sock, host, port, url, content_type, payload, payload_len, response_cb,
-			    recv_buf, sizeof(recv_buf), HTTP_SHELL_TIMEOUT_MS, (void *)sh);
+	ret = HTTP_REQ(HTTP_POST, sock, host, port, url, content_type, payload, payload_len,
+		       response_cb, recv_buf, sizeof(recv_buf), HTTP_SHELL_TIMEOUT_MS, (void *)sh);
 	if (ret < 0) {
 		shell_error(sh, "HTTP POST failed: %d", ret);
 	}
@@ -176,8 +174,8 @@ static int cmd_https_get(const struct shell *sh, size_t argc, char **argv)
 		return sock;
 	}
 
-	ret = HTTP_REQ_GET(sock, host, port, url, NULL, NULL, 0U, response_cb, recv_buf,
-			   sizeof(recv_buf), HTTP_SHELL_TIMEOUT_MS, (void *)sh);
+	ret = HTTP_REQ(HTTP_GET, sock, host, port, url, NULL, NULL, 0U, response_cb, recv_buf,
+		       sizeof(recv_buf), HTTP_SHELL_TIMEOUT_MS, (void *)sh);
 	if (ret < 0) {
 		shell_error(sh, "HTTPS GET failed: %d", ret);
 	}
@@ -202,8 +200,8 @@ static int cmd_https_post(const struct shell *sh, size_t argc, char **argv)
 		return sock;
 	}
 
-	ret = HTTP_REQ_POST(sock, host, port, url, content_type, payload, payload_len, response_cb,
-			    recv_buf, sizeof(recv_buf), HTTP_SHELL_TIMEOUT_MS, (void *)sh);
+	ret = HTTP_REQ(HTTP_POST, sock, host, port, url, content_type, payload, payload_len,
+		       response_cb, recv_buf, sizeof(recv_buf), HTTP_SHELL_TIMEOUT_MS, (void *)sh);
 	if (ret < 0) {
 		shell_error(sh, "HTTPS POST failed: %d", ret);
 	}
