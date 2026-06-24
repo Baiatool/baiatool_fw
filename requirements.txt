@@ -1,0 +1,13 @@
+# Install order matters — run after west update, not before.
+#
+# Full setup sequence:
+#   1. pip install west
+#   2. west init -l baiatool_fw/        # local dev (or: west init -m <url>)
+#   3. west update
+#   4. pip install -r baiatool_fw/requirements.txt
+#   5. west sdk install
+#   6. west packages pip --install      # esptool + board-specific tools
+#   7. west blobs fetch hal_espressif   # WiFi/BT binary blobs
+
+# Zephyr base requirements (available only after step 3 — west update)
+-r ../zephyr/scripts/requirements-base.txt
