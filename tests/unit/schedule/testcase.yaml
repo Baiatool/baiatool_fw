@@ -1,0 +1,8 @@
+tests:
+  unit.schedule:
+    platform_allow:
+      - qemu_x86
+    tags:
+      - simulated
+      - schedule
+      - unit

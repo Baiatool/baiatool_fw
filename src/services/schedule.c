@@ -170,9 +170,9 @@ finish:
 static void schedule_storage_update(const struct zbus_channel *chan)
 {
 	int ret;
-	const struct baiatool_schedule_state *state;
+	struct baiatool_schedule_state *state;
 
-	state = zbus_chan_const_msg(chan);
+	state = zbus_chan_msg(chan);
 
 	ret = baiatool_storage_update(BAIATOOL_SCHEDULE_NVS_ID, state,
 				      sizeof(struct baiatool_schedule_state));
