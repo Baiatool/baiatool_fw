@@ -5,8 +5,6 @@
  * The service thread starts automatically via K_THREAD_DEFINE in sntp.c.
  * Tests publish to wifi_state_chan and observe sntp_time_chan.
  *
- * before_each() publishes DISCONNECTED to break any ongoing retry loop, then
- * resets stub state and the sntp_time_chan value so each test starts clean.
  */
 
 #include <zephyr/kernel.h>
