@@ -33,12 +33,15 @@ LOG_MODULE_REGISTER(wifi, CONFIG_WIFI_LOG_LEVEL);
 
 #define WIFI_EVENT_MASK (NET_EVENT_WIFI_CONNECT_RESULT | NET_EVENT_WIFI_DISCONNECT_RESULT)
 
+ZBUS_OBS_DECLARE(sntp_wifi_state_sub);
+
 ZBUS_SUBSCRIBER_DEFINE(wifi_cmd_sub, CONFIG_WIFI_CMD_SUB_QUEUE_SIZE);
 
 ZBUS_CHAN_DEFINE(wifi_cmd_chan, struct wifi_cmd_msg, NULL, NULL, ZBUS_OBSERVERS(wifi_cmd_sub),
 		 ZBUS_MSG_INIT(.type = WIFI_CMD_DISCONNECT));
 
-ZBUS_CHAN_DEFINE(wifi_state_chan, struct wifi_state_msg, NULL, NULL, ZBUS_OBSERVERS_EMPTY,
+ZBUS_CHAN_DEFINE(wifi_state_chan, struct wifi_state_msg, NULL, NULL,
+		 ZBUS_OBSERVERS(sntp_wifi_state_sub),
 		 ZBUS_MSG_INIT(.state = WIFI_BAIATOOL_STATE_DISCONNECTED));
 
 static struct net_if *wifi_iface;
