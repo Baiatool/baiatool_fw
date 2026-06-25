@@ -16,7 +16,7 @@ static const struct baiatool_schedule_state k_idle = {
 static void before_each(void *fixture)
 {
 	ARG_UNUSED(fixture);
-	zbus_chan_pub(&schedule_chan_state, &k_idle, K_MSEC(100));
+	zbus_chan_pub(&schedule_state_chan, &k_idle, K_MSEC(100));
 }
 
 ZTEST_SUITE(schedule, NULL, NULL, before_each, NULL, NULL);
@@ -34,15 +34,13 @@ static void pub_cmd(enum schedule_cmd_id id, const char *user_id)
 		memcpy(cmd.user_id, user_id, MIN(id_len, sizeof(cmd.user_id) - 1U));
 	}
 
-	zbus_chan_pub(&schedule_chan_cmd, &cmd, K_MSEC(100));
+	zbus_chan_pub(&schedule_cmd_chan, &cmd, K_MSEC(100));
 }
 
 static void get_state(struct baiatool_schedule_state *out)
 {
-	zbus_chan_read(&schedule_chan_state, out, K_MSEC(100));
+	zbus_chan_read(&schedule_state_chan, out, K_MSEC(100));
 }
-
-/* ── FIRST_USE ───────────────────────────────────────────────────── */
 
 ZTEST(schedule, test_first_use_sets_state)
 {
@@ -81,8 +79,6 @@ ZTEST(schedule, test_first_use_rejects_when_session_active)
 	zassert_mem_equal(s.user_id, USER_A, strlen(USER_A),
 			  "user_id should still belong to USER_A after rejected FIRST_USE");
 }
-
-/* ── EXTEND_TIME ─────────────────────────────────────────────────── */
 
 ZTEST(schedule, test_extend_time_increases_end_time)
 {
@@ -127,8 +123,6 @@ ZTEST(schedule, test_extend_time_rejects_without_session)
 	zassert_equal(s.last_cmd, SCHEDULE_CMD_END_USE,
 		      "extend without session should be rejected, got last_cmd=%d", s.last_cmd);
 }
-
-/* ── END_USE ─────────────────────────────────────────────────────── */
 
 ZTEST(schedule, test_end_use_clears_state)
 {
@@ -184,8 +178,6 @@ ZTEST(schedule, test_end_use_rejects_when_idle)
 	zassert_equal(s.last_cmd, SCHEDULE_CMD_END_USE,
 		      "END_USE on idle state should be rejected, got last_cmd=%d", s.last_cmd);
 }
-
-/* ── Full lifecycle ──────────────────────────────────────────────── */
 
 ZTEST(schedule, test_full_lifecycle)
 {

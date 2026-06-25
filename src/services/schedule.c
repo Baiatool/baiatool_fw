@@ -30,10 +30,10 @@ LOG_MODULE_REGISTER(schedule, CONFIG_SCHEDULE_LOG_LEVEL);
 static void schedule_chan_listener(const struct zbus_channel *chan);
 static void schedule_storage_update(const struct zbus_channel *chan);
 
-ZBUS_CHAN_DEFINE(schedule_chan_cmd, struct baiatool_schedule_cmd, NULL, NULL, ZBUS_OBSERVERS_EMPTY,
+ZBUS_CHAN_DEFINE(schedule_cmd_chan, struct baiatool_schedule_cmd, NULL, NULL, ZBUS_OBSERVERS_EMPTY,
 		 ZBUS_MSG_INIT(.cmd_id = SCHEDULE_CMD_END_USE, .user_id = {0}));
 
-ZBUS_CHAN_DEFINE(schedule_chan_state, struct baiatool_schedule_state, NULL, NULL,
+ZBUS_CHAN_DEFINE(schedule_state_chan, struct baiatool_schedule_state, NULL, NULL,
 		 ZBUS_OBSERVERS_EMPTY,
 		 ZBUS_MSG_INIT(.start_time = 0, .end_time = 0, .user_id = {0},
 			       .last_cmd = SCHEDULE_CMD_END_USE));
@@ -41,8 +41,8 @@ ZBUS_CHAN_DEFINE(schedule_chan_state, struct baiatool_schedule_state, NULL, NULL
 ZBUS_LISTENER_DEFINE(schedule_listener, schedule_chan_listener);
 ZBUS_LISTENER_DEFINE(schedule_state_cb, schedule_storage_update);
 
-ZBUS_CHAN_ADD_OBS(schedule_chan_cmd, schedule_listener, 1);
-ZBUS_CHAN_ADD_OBS(schedule_chan_state, schedule_state_cb, 1);
+ZBUS_CHAN_ADD_OBS(schedule_cmd_chan, schedule_listener, 1);
+ZBUS_CHAN_ADD_OBS(schedule_state_chan, schedule_state_cb, 1);
 
 static void schedule_chan_listener(const struct zbus_channel *chan)
 {
@@ -54,13 +54,13 @@ static void schedule_chan_listener(const struct zbus_channel *chan)
 
 	msg = zbus_chan_const_msg(chan);
 
-	err = zbus_chan_claim(&schedule_chan_state, K_MSEC(200));
+	err = zbus_chan_claim(&schedule_state_chan, K_MSEC(200));
 	if (err < 0) {
 		LOG_ERR("Failed to claim channel: %d", err);
 		return;
 	}
 
-	state = zbus_chan_msg(&schedule_chan_state);
+	state = zbus_chan_msg(&schedule_state_chan);
 
 	switch (msg->cmd_id) {
 
@@ -150,7 +150,7 @@ static void schedule_chan_listener(const struct zbus_channel *chan)
 	}
 
 finish:
-	err = zbus_chan_finish(&schedule_chan_state);
+	err = zbus_chan_finish(&schedule_state_chan);
 	if (err < 0) {
 		LOG_ERR("Failed to finish channel: %d", err);
 		return;
@@ -160,7 +160,7 @@ finish:
 		return;
 	}
 
-	err = zbus_chan_notify(&schedule_chan_state, K_MSEC(300));
+	err = zbus_chan_notify(&schedule_state_chan, K_MSEC(300));
 	if (err < 0) {
 		LOG_ERR("Failed to notify channel: %d", err);
 		return;

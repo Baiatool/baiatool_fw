@@ -29,13 +29,13 @@
  * @brief Declares the channel for the scheduling service status.
  *
  */
-ZBUS_CHAN_DECLARE(schedule_chan_state);
+ZBUS_CHAN_DECLARE(schedule_state_chan);
 
 /**
  * @brief Declares the channel for the scheduling service commands.
  *
  */
-ZBUS_CHAN_DECLARE(schedule_chan_cmd);
+ZBUS_CHAN_DECLARE(schedule_cmd_chan);
 
 /**
  * @brief Enumeration of command identifiers for the scheduling service.
@@ -53,10 +53,11 @@ enum schedule_cmd_id {
  *
  */
 struct baiatool_schedule_state {
-	uint8_t user_id[CONFIG_MAX_ID_LENGTH]; /**< User ID of the user currently using the workstation. */
+	uint8_t user_id[CONFIG_MAX_ID_LENGTH]; /**< User ID of the user currently using the
+						  workstation. */
 	enum schedule_cmd_id last_cmd;         /**< Last command sent by the user. */
 	time_t start_time;                     /**< Start time for using the workstation. */
-	time_t end_time;                       /**< Time when the workstation can no longer be used. */
+	time_t end_time; /**< Time when the workstation can no longer be used. */
 };
 
 /**
