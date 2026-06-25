@@ -4,39 +4,110 @@ Zephyr-based firmware for the Baiatool project, targeting the ESP32 (DevKitC).
 
 ## Prerequisites
 
-- [Zephyr SDK](https://docs.zephyrproject.org/latest/develop/getting_started/index.html) installed
-- `west` installed (`pip install west`)
+- Python 3.12+
+- CMake >= 3.20 and Ninja
 
-## Getting started
+The Zephyr SDK and board tools are installed automatically during setup (`west sdk install` and `west packages pip --install`).
 
-This repo is the west manifest (T2 topology), so use `west init -m` to bootstrap the workspace.
+## Setup
+
+All commands run from the workspace root (parent of `baiatool_fw/`).
+
+### Quick setup (recommended)
+
+Run `setup.sh` from the workspace root — handles venv, `west init`, `west update`, SDK, board tools, and blobs automatically:
 
 ```bash
-west init -m https://github.com/Baiatool/baiatool_fw.git --mr main baiatool-workspace
-cd baiatool-workspace
+bash baiatool_fw/setup.sh
+```
+
+Steps are idempotent; re-running skips what's already done.
+
+### 1. Create workspace (manual)
+
+**From a local clone (development):**
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate      # Windows: .venv\Scripts\activate
+pip install west
+west init -l baiatool_fw/
 west update
 ```
 
-This creates the following layout:
+**From scratch (fresh clone):**
+
+```bash
+mkdir baiatool-workspace && cd baiatool-workspace
+python3 -m venv .venv
+source .venv/bin/activate
+pip install west
+west init -m https://github.com/Baiatool/baiatool_fw --mr main .
+west update
+```
+
+Workspace layout after `west update`:
 
 ```
 baiatool-workspace/
-├── baiatool_fw/       # this repo (app + manifest)
-├── zephyr/
+├── .venv/
+├── baiatool_fw/           # app + manifest
+├── zephyr/                # Zephyr v4.4.0
 └── modules/
     ├── hal/espressif/
-    └── lib/gui/lvgl/
+    ├── lib/gui/lvgl/
+    ├── crypto/mbedtls/
+    └── crypto/tf-psa-crypto/
+```
+
+### 2. Install dependencies
+
+```bash
+pip install -r baiatool_fw/requirements.txt   # Zephyr base deps
+west sdk install                               # Zephyr SDK toolchain
+west packages pip --install                    # esptool + board tools
+west blobs fetch hal_espressif                 # WiFi/BT binary blobs
 ```
 
 ## Building
 
 ```bash
-cd baiatool-workspace/baiatool_fw
-west build
+west build -p always baiatool_fw -b esp32_devkitc/esp32/procpu
 ```
 
-To flash:
+Output binary: `build/zephyr/zephyr.bin`
+
+## Flashing
 
 ```bash
 west flash
+```
+
+Connect the ESP32 DevKitC via USB before flashing.
+
+## Serial monitor
+
+```bash
+west espressif monitor
+```
+
+Or any serial terminal at 115200 baud on the ESP32 USB port.
+
+## Project structure
+
+```
+baiatool_fw/
+├── src/
+│   ├── components/    # reusable hardware components
+│   ├── drivers/       # device drivers
+│   ├── endpoints/     # communication endpoints
+│   ├── services/      # application services
+│   ├── shell/         # debug shell commands
+│   └── main.c
+├── includes/          # public headers
+├── boards/            # board-specific overlays
+├── prj.conf           # Kconfig configuration
+├── CMakeLists.txt
+├── requirements.txt   # Python deps (install after west update)
+└── west.yml           # west manifest
 ```
