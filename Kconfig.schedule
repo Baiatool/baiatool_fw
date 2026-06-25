@@ -1,0 +1,23 @@
+module = SCHEDULE
+module-str = schedule
+source "subsys/logging/Kconfig.template.log_config"
+
+menu "Schedule"
+    config MAX_ID_LENGTH
+        int "Max number of characters in an ID"
+        default 16
+        help
+            Maximum number of characters allowed in a User ID.
+
+    config SCHEDULE_FIRST_USE_TIMEOUT_MINUTES
+        int "Timeout in minutes for a workstation's first use"
+        default 120
+        help
+            Number of minutes before a workstation's initial reservation times out.
+
+    config SCHEDULE_EXTEND_TIMEOUT_MINUTES
+        int "Timeout in minutes for a workstation's extend command"
+        default 60
+        help
+            Number of minutes added when a workstation reservation is extended.
+endmenu
