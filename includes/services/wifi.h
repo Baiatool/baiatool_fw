@@ -34,19 +34,29 @@ enum wifi_cmd_type {
 };
 
 /**
+ * @brief Structure of the credentials required to connect to a Wi-Fi network.
+ *
+ */
+struct wifi_credentials {
+	char ssid[CONFIG_WIFI_SSID_MAX_LEN +
+		  1]; /**< SSID of the Wi-Fi network to connect (for WIFI_CMD_CONNECT) */
+	char psk[CONFIG_WIFI_PSK_MAX_LEN +
+		 1]; /**< PSK (password) of the Wi-Fi network to connect (for WIFI_CMD_CONNECT) */
+};
+
+/**
  * @brief Structure of the message sent to the Wi-Fi service to request a command execution.
- * 
+ *
  */
 struct wifi_cmd_msg {
-	enum wifi_cmd_type type; 				 /**< Type of the Wi-Fi command */
-	char ssid[CONFIG_WIFI_SSID_MAX_LEN + 1]; /**< SSID of the Wi-Fi network to connect (for WIFI_CMD_CONNECT) */
-	char psk[CONFIG_WIFI_PSK_MAX_LEN + 1]; 	 /**< PSK (password) of the Wi-Fi network to connect (for WIFI_CMD_CONNECT) */
-	bool persist; 							 /**< Whether to persist the connection settings */
+	enum wifi_cmd_type type; /**< Type of the Wi-Fi command */
+	struct wifi_credentials credentials;
+	bool persist; /**< Whether to persist the connection settings */
 };
 
 /**
  * @brief Enumeration of the possible states of the Wi-Fi service for Baiatool.
- * 
+ *
  */
 enum wifi_baiatool_state {
 	WIFI_BAIATOOL_STATE_DISCONNECTED = 0, /**< Wi-Fi is disconnected */
@@ -57,7 +67,7 @@ enum wifi_baiatool_state {
 
 /**
  * @brief Structure of the message published by the Wi-Fi service to report its current state.
- * 
+ *
  */
 struct wifi_state_msg {
 	enum wifi_baiatool_state state; /**< Current state of the Wi-Fi service */

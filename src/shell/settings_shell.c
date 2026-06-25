@@ -57,9 +57,9 @@ static int cmd_settings_get(const struct shell *sh, size_t argc, char **argv)
 	shell_print(sh, "  start   : %lld", (long long)settings.schedule_state.start_time);
 	shell_print(sh, "  end     : %lld", (long long)settings.schedule_state.end_time);
 	shell_print(sh, "WiFi:");
-	shell_print(sh, "  ssid    : %s", settings.wifi_settings.wifi_ssid);
+	shell_print(sh, "  ssid    : %s", settings.wifi_credentials.ssid);
 	shell_print(sh, "  psk     : %s",
-		    settings.wifi_settings.wifi_psk[0] != '\0' ? "****" : "(not set)");
+		    settings.wifi_credentials.psk[0] != '\0' ? "****" : "(not set)");
 
 	return 0;
 }

@@ -41,8 +41,8 @@ int baiatool_settings_get(struct baiatool_settings *settings)
 		return (int)ret;
 	}
 
-	ret = baiatool_storage_read(BAIATOOL_NET_SETTINGS_NVS_ID, &settings->wifi_settings,
-				    sizeof(settings->wifi_settings));
+	ret = baiatool_storage_read(BAIATOOL_NET_SETTINGS_NVS_ID, &settings->wifi_credentials,
+				    sizeof(settings->wifi_credentials));
 	if (ret < 0) {
 		LOG_ERR("Failed to read wifi settings: %d", (int)ret);
 		return (int)ret;

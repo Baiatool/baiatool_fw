@@ -3,6 +3,7 @@
 
 #include "components/settings.h"
 #include "components/storage.h"
+#include "services/wifi.h"
 
 #define TEST_USER_ID "test_user"
 #define TEST_SSID    "TestNetwork"
@@ -22,12 +23,12 @@ static void store_schedule(void)
 
 static void store_wifi(void)
 {
-	struct wifi_settings w;
+	struct wifi_credentials w;
 
-	strncpy(w.wifi_ssid, TEST_SSID, sizeof(w.wifi_ssid) - 1U);
-	w.wifi_ssid[sizeof(w.wifi_ssid) - 1U] = '\0';
-	strncpy(w.wifi_psk, TEST_PSK, sizeof(w.wifi_psk) - 1U);
-	w.wifi_psk[sizeof(w.wifi_psk) - 1U] = '\0';
+	strncpy(w.ssid, TEST_SSID, sizeof(w.ssid) - 1U);
+	w.ssid[sizeof(w.ssid) - 1U] = '\0';
+	strncpy(w.psk, TEST_PSK, sizeof(w.psk) - 1U);
+	w.psk[sizeof(w.psk) - 1U] = '\0';
 	baiatool_storage_create(BAIATOOL_NET_SETTINGS_NVS_ID, &w, sizeof(w));
 }
 
@@ -94,8 +95,8 @@ ZTEST(settings, test_get_wifi_data_matches)
 	int ret = baiatool_settings_get(&s);
 
 	zassert_equal(ret, 0, "settings_get failed: %d", ret);
-	zassert_str_equal(s.wifi_settings.wifi_ssid, TEST_SSID, "ssid mismatch");
-	zassert_str_equal(s.wifi_settings.wifi_psk, TEST_PSK, "psk mismatch");
+	zassert_str_equal(s.wifi_credentials.ssid, TEST_SSID, "ssid mismatch");
+	zassert_str_equal(s.wifi_credentials.psk, TEST_PSK, "psk mismatch");
 }
 
 ZTEST(settings, test_get_updated_schedule_reflects_change)

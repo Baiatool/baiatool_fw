@@ -22,15 +22,7 @@
 #define COMPONENTS_SETTINGS_H
 
 #include "services/schedule.h"
-
-/**
- * @brief Helper structure to store wifi settings
- *
- */
-struct wifi_settings {
-	char wifi_ssid[CONFIG_WIFI_SSID_MAX_LEN + 1]; /**< WiFi SSID currently on flash */
-	char wifi_psk[CONFIG_WIFI_PSK_MAX_LEN + 1];   /**< WiFi PSK currently on flash */
-};
+#include "services/wifi.h"
 
 /**
  * @brief Structure to store baiatool settings
@@ -38,7 +30,7 @@ struct wifi_settings {
  */
 struct baiatool_settings {
 	struct baiatool_schedule_state schedule_state; /**< Current schedule state */
-	struct wifi_settings wifi_settings;            /**< WiFi settings */
+	struct wifi_credentials wifi_credentials;      /**< WiFi credentials */
 
 	/* TODO @Jota: Add provisioning settings */
 };
