@@ -6,6 +6,7 @@ rsource "Kconfig.storage"
 rsource "Kconfig.wifi" 
 rsource "Kconfig.schedule"
 rsource "Kconfig.sntp"
+rsource "Kconfig.led"
 
 module = MAIN
 module-str = main
