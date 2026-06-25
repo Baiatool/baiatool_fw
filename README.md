@@ -13,7 +13,17 @@ The Zephyr SDK and board tools are installed automatically during setup (`west s
 
 All commands run from the workspace root (parent of `baiatool_fw/`).
 
-### 1. Create workspace
+### Quick setup (recommended)
+
+Run `setup.sh` from the workspace root — handles venv, `west init`, `west update`, SDK, board tools, and blobs automatically:
+
+```bash
+bash baiatool_fw/setup.sh
+```
+
+Steps are idempotent; re-running skips what's already done.
+
+### 1. Create workspace (manual)
 
 **From a local clone (development):**
 
@@ -32,7 +42,7 @@ mkdir baiatool-workspace && cd baiatool-workspace
 python3 -m venv .venv
 source .venv/bin/activate
 pip install west
-west init -m https://github.com/Baiatool/baiatool_fw.git --mr main .
+west init -m https://github.com/Baiatool/baiatool_fw --mr main .
 west update
 ```
 
