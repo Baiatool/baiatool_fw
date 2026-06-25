@@ -32,6 +32,13 @@ struct sntp_service_time_msg {
 	bool valid;           /**< true when unix_time_s carries a good SNTP value */
 };
 
+/**
+ * @brief Logs the given Unix timestamp in seconds as a human-readable date and time.
+ * 
+ * @param unix_s Unix timestamp in seconds since the epoch (January 1, 1970).
+ */
+void log_sntp_datetime(uint64_t unix_s);
+
 ZBUS_CHAN_DECLARE(sntp_time_chan);
 
 #endif /* SERVICES_SNTP_H */

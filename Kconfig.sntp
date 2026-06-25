@@ -35,6 +35,13 @@ menu "SNTP service configuration"
         default 4
         help
           ZBus subscriber queue depth for WiFi state notifications in the SNTP service.
+
+    config SNTP_SERVICE_UTC_OFFSET
+        int "UTC offset in seconds"
+        default -10800
+        help
+          Offset from UTC in seconds applied when logging local time.
+          Brazil (BRT) = -10800 (UTC-3). No DST adjustment is performed.
 endmenu
 
 module = SNTP_SERVICE

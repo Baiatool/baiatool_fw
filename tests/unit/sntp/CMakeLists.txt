@@ -17,3 +17,7 @@ target_include_directories(app PRIVATE
 
 # sntp_simple is provided directly by stubs.c (CONFIG_SNTP=n disables the
 # Zephyr library, so there is no duplicate symbol at link time).
+
+# native_sim uses host glibc with -std=c17, which hides POSIX extensions by
+# default. gmtime_r is POSIX.1-2008, not C17, so it needs this flag.
+target_compile_definitions(app PRIVATE _POSIX_C_SOURCE=200809L)

@@ -20,10 +20,15 @@
 
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/zbus/zbus.h>
+#include <time.h>
+
+#include "services/sntp.h"
 
 LOG_MODULE_REGISTER(main, CONFIG_MAIN_LOG_LEVEL);
 
 int main(void)
 {
+
 	return 0;
 }
