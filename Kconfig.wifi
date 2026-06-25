@@ -31,7 +31,7 @@ menu "Wi-Fi configuration"
 
     config WIFI_CMD_SUB_QUEUE_SIZE
         int "Wi-Fi zbubs command queue size of subscribers"
-        default 4
+        default 2
         help
           This option sets the size of the sub-queue for Wi-Fi commands. 
           The default value is 10, which should be sufficient for most applications. 
