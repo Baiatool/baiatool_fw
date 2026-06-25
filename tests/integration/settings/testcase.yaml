@@ -1,0 +1,8 @@
+tests:
+  integration.settings:
+    platform_allow:
+      - qemu_x86
+    tags:
+      - simulated
+      - settings
+      - integration

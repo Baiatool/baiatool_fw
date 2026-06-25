@@ -1,0 +1,46 @@
+/*******************************************************************
+ *
+ *  ████  ████ ███ ████ ███ ████ ████ █
+ *  █  ██ █  █  █  █  █  █  █  █ █  █ █
+ *  ████  ████  █  ████  █  █  █ █  █ █
+ *  █  ██ █  █  █  █  █  █  █  █ █  █ █
+ *  ████  █  █ ███ █  █  █  ████ ████ ███
+ *
+ ********************************************************************
+ * @file settings.h
+ *
+ * @brief Implementation of settings component, responsible for managing device settings.
+ * @author José Félix de Oliveira Neto (josefelix.neto@edge.ufal.br)
+ * @version 0.1
+ * @date 25/06/2026
+ *
+ * @copyright Copyright (c) 2026
+ *
+ *******************************************************************/
+
+#ifndef COMPONENTS_SETTINGS_H
+#define COMPONENTS_SETTINGS_H
+
+#include "services/schedule.h"
+#include "services/wifi.h"
+
+/**
+ * @brief Structure to store baiatool settings
+ *
+ */
+struct baiatool_settings {
+	struct baiatool_schedule_state schedule_state; /**< Current schedule state */
+	struct wifi_credentials wifi_credentials;      /**< WiFi credentials */
+
+	/* TODO @Jota: Add provisioning settings */
+};
+
+/**
+ * @brief Gets the baiatool settings from storage
+ *
+ * @param[out] settings Pointer to the baiatool settings structure
+ * @return int 0 if Success, -ERRNO otherwise
+ */
+int baiatool_settings_get(struct baiatool_settings *settings);
+
+#endif /* COMPONENTS_SETTINGS_H */

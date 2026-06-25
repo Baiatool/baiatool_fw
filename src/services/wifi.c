@@ -48,11 +48,6 @@ static struct net_if *wifi_iface;
 static struct net_mgmt_event_callback wifi_evt_cb;
 static enum wifi_baiatool_state current_state = WIFI_BAIATOOL_STATE_DISCONNECTED;
 
-struct wifi_credentials {
-	char ssid[CONFIG_WIFI_SSID_MAX_LEN + 1];
-	char psk[CONFIG_WIFI_PSK_MAX_LEN + 1];
-};
-
 static inline void publish_state(enum wifi_baiatool_state state)
 {
 	struct wifi_state_msg msg = {.state = state};
@@ -184,13 +179,14 @@ static void wps_result_cb(const char *ssid, const char *psk, int err)
 
 	struct wifi_cmd_msg cmd = {.type = WIFI_CMD_CONNECT};
 
-	strncpy(cmd.ssid, ssid, CONFIG_WIFI_SSID_MAX_LEN);
-	cmd.ssid[CONFIG_WIFI_SSID_MAX_LEN] = '\0';
+	strncpy(cmd.credentials.ssid, ssid, CONFIG_WIFI_SSID_MAX_LEN);
+	cmd.credentials.ssid[CONFIG_WIFI_SSID_MAX_LEN] = '\0';
 
-	strncpy(cmd.psk, psk, CONFIG_WIFI_PSK_MAX_LEN);
-	cmd.psk[CONFIG_WIFI_PSK_MAX_LEN] = '\0';
+	strncpy(cmd.credentials.psk, psk, CONFIG_WIFI_PSK_MAX_LEN);
+	cmd.credentials.psk[CONFIG_WIFI_PSK_MAX_LEN] = '\0';
 
-	wifi_save_credentials(BAIATOOL_PROVISIONING_NVS_ID, cmd.ssid, cmd.psk);
+	wifi_save_credentials(BAIATOOL_PROVISIONING_NVS_ID, cmd.credentials.ssid,
+			      cmd.credentials.psk);
 
 	err = zbus_chan_pub(&wifi_cmd_chan, &cmd, K_MSEC(500));
 	if (err < 0) {
@@ -199,7 +195,7 @@ static void wps_result_cb(const char *ssid, const char *psk, int err)
 		return;
 	}
 
-	LOG_INF("WPS success, connecting to %s", cmd.ssid);
+	LOG_INF("WPS success, connecting to %s", cmd.credentials.ssid);
 }
 
 static inline void wifi_do_connect_wps(void)
@@ -258,10 +254,10 @@ static void wifi_cmd_thread_fn(void *p1, void *p2, void *p3)
 		switch (cmd.type) {
 		case WIFI_CMD_CONNECT:
 			if (cmd.persist) {
-				wifi_save_credentials(BAIATOOL_NET_SETTINGS_NVS_ID, cmd.ssid,
-						      cmd.psk);
+				wifi_save_credentials(BAIATOOL_NET_SETTINGS_NVS_ID,
+						      cmd.credentials.ssid, cmd.credentials.psk);
 			}
-			wifi_do_connect(cmd.ssid, cmd.psk);
+			wifi_do_connect(cmd.credentials.ssid, cmd.credentials.psk);
 			break;
 		case WIFI_CMD_CONNECT_WPS:
 			wifi_do_connect_wps();

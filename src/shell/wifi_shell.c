@@ -47,15 +47,15 @@ static int cmd_wifi_connect(const struct shell *sh, size_t argc, char **argv)
 {
 	struct wifi_cmd_msg cmd = {.type = WIFI_CMD_CONNECT, .persist = true};
 
-	strncpy(cmd.ssid, argv[1], CONFIG_WIFI_SSID_MAX_LEN);
-	cmd.ssid[CONFIG_WIFI_SSID_MAX_LEN] = '\0';
+	strncpy(cmd.credentials.ssid, argv[1], CONFIG_WIFI_SSID_MAX_LEN);
+	cmd.credentials.ssid[CONFIG_WIFI_SSID_MAX_LEN] = '\0';
 
 	if (argc == 3) {
-		strncpy(cmd.psk, argv[2], CONFIG_WIFI_PSK_MAX_LEN);
-		cmd.psk[CONFIG_WIFI_PSK_MAX_LEN] = '\0';
+		strncpy(cmd.credentials.psk, argv[2], CONFIG_WIFI_PSK_MAX_LEN);
+		cmd.credentials.psk[CONFIG_WIFI_PSK_MAX_LEN] = '\0';
 	}
 
-	shell_print(sh, "Connecting to '%s'...", cmd.ssid);
+	shell_print(sh, "Connecting to '%s'...", cmd.credentials.ssid);
 	return zbus_chan_pub(&wifi_cmd_chan, &cmd, K_MSEC(500));
 }
 
@@ -102,7 +102,7 @@ static int cmd_wifi_monitor(const struct shell *sh, size_t argc, char **argv)
 	ARG_UNUSED(argv);
 
 	struct wifi_state_msg state;
-	enum wifi_baiatool_state last = (enum wifi_baiatool_state)-1;
+	enum wifi_baiatool_state last = (enum wifi_baiatool_state) - 1;
 
 	shell_print(sh, "Monitoring WiFi state (60 s)...");
 
