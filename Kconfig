@@ -5,6 +5,7 @@ endmenu
 rsource "Kconfig.storage"
 rsource "Kconfig.wifi" 
 rsource "Kconfig.schedule"
+rsource "Kconfig.sntp"
 
 module = MAIN
 module-str = main

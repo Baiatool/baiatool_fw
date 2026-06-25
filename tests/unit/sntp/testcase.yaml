@@ -1,0 +1,8 @@
+tests:
+  unit.sntp:
+    platform_allow:
+      - native_sim
+    tags:
+      - simulated
+      - sntp
+      - unit

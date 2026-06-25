@@ -1,0 +1,42 @@
+menu "SNTP service configuration"
+    config SNTP_SERVICE_SERVER
+        string "SNTP server hostname"
+        default "pool.ntp.org"
+        help
+          Hostname or IP address of the SNTP server to query for time synchronization.
+
+    config SNTP_SERVICE_TIMEOUT_MS
+        int "SNTP request timeout (ms)"
+        default 5000
+        help
+          Timeout in milliseconds for a single SNTP request.
+
+    config SNTP_SERVICE_RETRY_INTERVAL_MS
+        int "SNTP retry interval on failure (ms)"
+        default 30000
+        help
+          Time to wait before retrying after a failed SNTP sync while still connected.
+
+    config SNTP_SERVICE_THREAD_STACK_SIZE
+        int "SNTP service thread stack size"
+        default 3072
+        help
+          Stack size for the SNTP service thread. SNTP uses network sockets, so this
+          must be larger than a typical service thread.
+
+    config SNTP_SERVICE_THREAD_PRIORITY
+        int "SNTP service thread priority"
+        default 6
+        help
+          Priority for the SNTP service thread.
+
+    config SNTP_SERVICE_WIFI_SUB_QUEUE_SIZE
+        int "SNTP service WiFi state subscriber queue size"
+        default 4
+        help
+          ZBus subscriber queue depth for WiFi state notifications in the SNTP service.
+endmenu
+
+module = SNTP_SERVICE
+module-str = sntp_service
+source "subsys/logging/Kconfig.template.log_config"
