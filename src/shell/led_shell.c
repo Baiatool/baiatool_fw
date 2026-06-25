@@ -104,11 +104,11 @@ static int cmd_led_fast(const struct shell *sh, size_t argc, char **argv)
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	led_cmds,
 	SHELL_CMD_ARG(off, NULL, "turn off all LEDs", cmd_led_off, 1, 0),
-	SHELL_CMD_ARG(solid, NULL, "<color> solid on  [red|green|blue|white|default]",
+	SHELL_CMD_ARG(solid, NULL, "<color: red|green|blue|white|default>",
 		      cmd_led_solid, 2, 0),
-	SHELL_CMD_ARG(slow, NULL, "<color> slow blink [red|green|blue|white|default]",
+	SHELL_CMD_ARG(slow, NULL, "<color: red|green|blue|white|default>",
 		      cmd_led_slow, 2, 0),
-	SHELL_CMD_ARG(fast, NULL, "<color> fast blink [red|green|blue|white|default]",
+	SHELL_CMD_ARG(fast, NULL, "<color: red|green|blue|white|default>",
 		      cmd_led_fast, 2, 0),
 	SHELL_SUBCMD_SET_END);
 

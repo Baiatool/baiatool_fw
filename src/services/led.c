@@ -51,8 +51,17 @@ static struct k_timer blink_timer;
 static struct k_work blink_work;
 static bool blink_state;
 
+static inline void led_off(void)
+{
+	VERIFY_FUNC_AND_RETURN(gpio_pin_set_dt(&red_led, 0));
+	VERIFY_FUNC_AND_RETURN(gpio_pin_set_dt(&green_led, 0));
+	VERIFY_FUNC_AND_RETURN(gpio_pin_set_dt(&blue_led, 0));
+}
+
 static void baiatool_led_set_basic(bool state)
 {
+    led_off();
+    
 	switch (current_led_state.color) {
 	case LED_COLOR_RED:
 		VERIFY_FUNC_AND_RETURN(gpio_pin_set_dt(&red_led, state));
@@ -143,7 +152,7 @@ int led_init(void)
 		return 0;
 	}
 
-	ret = gpio_pin_configure_dt(&red_led, GPIO_OUTPUT);
+	ret = gpio_pin_configure_dt(&red_led, GPIO_OUTPUT_INACTIVE);
 	if (ret < 0) {
 		printk("Error %d: failed to configure Red LED pin", ret);
 		return 0;
@@ -154,7 +163,7 @@ int led_init(void)
 		return 0;
 	}
 
-	ret = gpio_pin_configure_dt(&green_led, GPIO_OUTPUT);
+	ret = gpio_pin_configure_dt(&green_led, GPIO_OUTPUT_INACTIVE);
 	if (ret < 0) {
 		LOG_ERR("Error %d: failed to configure Green LED pin", ret);
 		return 0;
@@ -165,7 +174,7 @@ int led_init(void)
 		return 0;
 	}
 
-	ret = gpio_pin_configure_dt(&blue_led, GPIO_OUTPUT);
+	ret = gpio_pin_configure_dt(&blue_led, GPIO_OUTPUT_INACTIVE);
 	if (ret < 0) {
 		LOG_ERR("Error %d: failed to configure Blue LED pin", ret);
 		return 0;
@@ -197,7 +206,7 @@ static void led_service_thread(void *p1, void *p2, void *p3)
 	}
 }
 
-K_THREAD_DEFINE(led_service_thread_id, CONFIG_LED_THREAD_STACK_SIZE, led_service_thread, NULL,
-		NULL, NULL, CONFIG_LED_THREAD_PRIORITY, 0, 0);
+K_THREAD_DEFINE(led_service_thread_id, CONFIG_LED_THREAD_STACK_SIZE, led_service_thread, NULL, NULL,
+		NULL, CONFIG_LED_THREAD_PRIORITY, 0, 0);
 
 SYS_INIT(led_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
