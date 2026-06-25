@@ -1,14 +1,3 @@
-/*
- * Unit tests for the baiatool schedule service state machine.
- * Platform: mps2/an385 (simulated, FLASH_SIMULATOR).
- *
- * storage_init() runs via SYS_INIT before tests execute.
- * before_each() resets schedule_chan_state to idle so each test starts clean.
- * schedule_storage_update fires as a side effect of state changes; NVS errors
- * on the first write of a test are benign — baiatool_storage_delete returns 0
- * for non-existent keys, so the subsequent create always succeeds.
- */
-
 #include <zephyr/zbus/zbus.h>
 #include <zephyr/ztest.h>
 

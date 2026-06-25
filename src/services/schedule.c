@@ -12,9 +12,9 @@
  * @brief Implements the scheduling management service for the workstation.
  * @author José Félix de Oliveira Neto (josefelix.neto@edge.ufal.br)
  * @version 0.1
- * @date 28/11/2025
+ * @date 24/06/2026
  *
- * @copyright Copyright (c) 2025
+ * @copyright Copyright (c) 2026
  *
  *******************************************************************/
 
