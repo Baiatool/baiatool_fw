@@ -3,6 +3,7 @@
 		red-led = &led0;
 		green-led = &led1;
 		blue-led = &led2;
+		btn-wps = &btn;
 	};
 
 	gpio_leds {
@@ -21,6 +22,15 @@
 		led2: blue {
 			gpios = <&gpio0 27 GPIO_ACTIVE_LOW>;
 			label = "Blue led";
+	};
+
+	gpio_keys {
+		compatible = "gpio-keys";
+		debounce-interval-ms = <50>;
+
+		btn: button {
+			label = "WPS";
+			gpios = <&gpio 36 GPIO_ACTIVE_LOW>;
 		};
 	};
 };
