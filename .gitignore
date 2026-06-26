@@ -111,3 +111,6 @@ TextEncoding.txt
 YAMLLint.txt
 
 /.venv
+
+CLAUDE*
+.claude*
