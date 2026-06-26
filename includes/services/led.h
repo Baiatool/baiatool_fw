@@ -24,24 +24,6 @@
 #include <zephyr/zbus/zbus.h>
 
 /**
- * @brief Device tree alias for the red LED.
- *
- */
-#define BAIATOOL_RED_LED_NODE DT_ALIAS(red_led)
-
-/**
- * @brief Device tree alias for the green LED.
- *
- */
-#define BAIATOOL_GREEN_LED_NODE DT_ALIAS(green_led)
-
-/**
- * @brief Device tree alias for the blue LED.
- *
- */
-#define BAIATOOL_BLUE_LED_NODE DT_ALIAS(blue_led)
-
-/**
  * @brief All colors that led can be set to.
  *
  */
@@ -50,7 +32,6 @@ enum baiatool_led_colors {
 	LED_COLOR_RED,         /**< Red LED */
 	LED_COLOR_GREEN,       /**< Green LED */
 	LED_COLOR_BLUE,        /**< Blue LED */
-	LED_COLOR_WHITE,       /**< White LED (Red + Green + Blue) */
 	LED_COLOR_AMOUNT       /**< Amount of LED colors */
 };
 
@@ -74,16 +55,19 @@ struct led_cmd_msg {
 /**
  * @brief Structure representing a command to control the LED.
  *
- * @return int Return 0 if the command was executed with success, or retVal if there was an error.
- *
+ * @retval 0 if the command was executed with success.
  * @retval -EIO I/O error when accessing an external GPIO chip.
  * @retval -EWOULDBLOCK if operation would block.
  * @retval -EFAULT Invalid command provided.
  */
 typedef struct {
-	void (*execute)(enum baiatool_led_colors); /** < Function pointer to execute led' command */
+	void (*execute)(void); /** < Function pointer to execute led' command */
 } led_cmd;
 
+/**
+ * @brief Declares the channel for the LED service commands.
+ * 
+ */
 ZBUS_CHAN_DECLARE(led_cmd_chan);
 
 #endif /* SERVICES_LED_H */

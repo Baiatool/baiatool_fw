@@ -35,8 +35,6 @@ static int color_from_str(const char *str, enum baiatool_led_colors *color)
 		*color = LED_COLOR_GREEN;
 	} else if (strcmp(str, "blue") == 0) {
 		*color = LED_COLOR_BLUE;
-	} else if (strcmp(str, "white") == 0) {
-		*color = LED_COLOR_WHITE;
 	} else if (strcmp(str, "default") == 0) {
 		*color = LED_COLOR_DEFAULT;
 	} else {

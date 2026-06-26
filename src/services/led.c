@@ -33,6 +33,12 @@
 		}                                                                                  \
 	} while (0)
 
+#define BAIATOOL_RED_LED_NODE DT_ALIAS(red_led)
+
+#define BAIATOOL_GREEN_LED_NODE DT_ALIAS(green_led)
+
+#define BAIATOOL_BLUE_LED_NODE DT_ALIAS(blue_led)
+
 LOG_MODULE_REGISTER(led, CONFIG_LED_LOG_LEVEL);
 
 ZBUS_SUBSCRIBER_DEFINE(led_cmd_sub, CONFIG_LED_CMD_SUB_QUEUE_SIZE);
@@ -44,12 +50,15 @@ static const struct gpio_dt_spec red_led = GPIO_DT_SPEC_GET(BAIATOOL_RED_LED_NOD
 static const struct gpio_dt_spec green_led = GPIO_DT_SPEC_GET(BAIATOOL_GREEN_LED_NODE, gpios);
 static const struct gpio_dt_spec blue_led = GPIO_DT_SPEC_GET(BAIATOOL_BLUE_LED_NODE, gpios);
 
-static struct led_cmd_msg current_led_state = {.color = LED_COLOR_DEFAULT,
-					       .pattern = LED_CMD_BLINK_OFF};
-
-static struct k_timer blink_timer;
-static struct k_work blink_work;
-static bool blink_state;
+static struct {
+	struct led_cmd_msg current_state;
+	struct k_timer blink_timer;
+	struct k_work work;
+	bool blink_state;
+} self = {
+	.current_state = {.color = LED_COLOR_DEFAULT, .pattern = LED_CMD_BLINK_OFF},
+	.blink_state = false,
+};
 
 static inline void led_off(void)
 {
@@ -60,9 +69,9 @@ static inline void led_off(void)
 
 static void baiatool_led_set_basic(bool state)
 {
-    led_off();
-    
-	switch (current_led_state.color) {
+	led_off();
+
+	switch (self.current_state.color) {
 	case LED_COLOR_RED:
 		VERIFY_FUNC_AND_RETURN(gpio_pin_set_dt(&red_led, state));
 		break;
@@ -70,11 +79,6 @@ static void baiatool_led_set_basic(bool state)
 		VERIFY_FUNC_AND_RETURN(gpio_pin_set_dt(&green_led, state));
 		break;
 	case LED_COLOR_BLUE:
-		VERIFY_FUNC_AND_RETURN(gpio_pin_set_dt(&blue_led, state));
-		break;
-	case LED_COLOR_WHITE:
-		VERIFY_FUNC_AND_RETURN(gpio_pin_set_dt(&red_led, state));
-		VERIFY_FUNC_AND_RETURN(gpio_pin_set_dt(&green_led, state));
 		VERIFY_FUNC_AND_RETURN(gpio_pin_set_dt(&blue_led, state));
 		break;
 	case LED_COLOR_DEFAULT:
@@ -91,43 +95,39 @@ static void baiatool_led_set_basic(bool state)
 static void blink_work_handler(struct k_work *work)
 {
 	ARG_UNUSED(work);
-	blink_state = !blink_state;
-	baiatool_led_set_basic(blink_state);
+	self.blink_state = !self.blink_state;
+	baiatool_led_set_basic(self.blink_state);
 }
 
-static void blink_timer_expiry(struct k_timer *timer)
+static void blink_timer_expire(struct k_timer *timer)
 {
 	ARG_UNUSED(timer);
-	k_work_submit(&blink_work);
+	k_work_submit(&self.work);
 }
 
-static void baiatool_led_set_off(enum baiatool_led_colors color)
+static void baiatool_led_set_off()
 {
-	ARG_UNUSED(color);
-	k_timer_stop(&blink_timer);
+	k_timer_stop(&self.blink_timer);
 	baiatool_led_set_basic(false);
 }
 
-static void baiatool_led_set_solid(enum baiatool_led_colors color)
+static void baiatool_led_set_solid()
 {
-	ARG_UNUSED(color);
-	k_timer_stop(&blink_timer);
+	k_timer_stop(&self.blink_timer);
 	baiatool_led_set_basic(true);
 }
 
-static void baiatool_led_set_slow(enum baiatool_led_colors color)
+static void baiatool_led_set_slow()
 {
-	ARG_UNUSED(color);
-	blink_state = false;
-	k_timer_start(&blink_timer, K_MSEC(CONFIG_LED_BLINK_TIME_SLOW_MS),
+	self.blink_state = false;
+	k_timer_start(&self.blink_timer, K_MSEC(CONFIG_LED_BLINK_TIME_SLOW_MS),
 		      K_MSEC(CONFIG_LED_BLINK_TIME_SLOW_MS));
 }
 
-static void baiatool_led_set_fast(enum baiatool_led_colors color)
+static void baiatool_led_set_fast()
 {
-	ARG_UNUSED(color);
-	blink_state = false;
-	k_timer_start(&blink_timer, K_MSEC(CONFIG_LED_BLINK_TIME_FAST_MS),
+	self.blink_state = false;
+	k_timer_start(&self.blink_timer, K_MSEC(CONFIG_LED_BLINK_TIME_FAST_MS),
 		      K_MSEC(CONFIG_LED_BLINK_TIME_FAST_MS));
 }
 
@@ -140,7 +140,7 @@ static led_cmd led_commands[LED_CMD_BLINK_AMOUNT] = {
 
 static void led_execute_command(void)
 {
-	led_commands[current_led_state.pattern].execute(current_led_state.color);
+	led_commands[self.current_state.pattern].execute();
 }
 
 int led_init(void)
@@ -180,8 +180,8 @@ int led_init(void)
 		return 0;
 	}
 
-	k_timer_init(&blink_timer, blink_timer_expiry, NULL);
-	k_work_init(&blink_work, blink_work_handler);
+	k_timer_init(&self.blink_timer, blink_timer_expire, NULL);
+	k_work_init(&self.work, blink_work_handler);
 
 	return 0;
 }
@@ -195,12 +195,12 @@ static void led_service_thread(void *p1, void *p2, void *p3)
 	const struct zbus_channel *chan;
 
 	while (!zbus_sub_wait(&led_cmd_sub, &chan, K_FOREVER)) {
-		if (zbus_chan_read(chan, &current_led_state, K_MSEC(100))) {
+		if (zbus_chan_read(chan, &self.current_state, K_MSEC(100))) {
 			continue;
 		}
 
-		LOG_DBG("Received LED command: color=%d, pattern=%d", current_led_state.color,
-			current_led_state.pattern);
+		LOG_DBG("Received LED command: color=%d, pattern=%d", self.current_state.color,
+			self.current_state.pattern);
 
 		led_execute_command();
 	}
