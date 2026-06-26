@@ -1,0 +1,3 @@
+module = SCHEDULE_ENDPOINT
+module-str = schedule_endpoint
+source "subsys/logging/Kconfig.template.log_config"
