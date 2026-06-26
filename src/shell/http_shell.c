@@ -18,7 +18,7 @@
  *
  *******************************************************************/
 
-#if CONFIG_SHELL
+#if CONFIG_SHELL_HTTP
 
 #include <zephyr/kernel.h>
 #include <zephyr/net/net_ip.h>
@@ -227,4 +227,4 @@ SHELL_STATIC_SUBCMD_SET_CREATE(https_cmds,
 SHELL_CMD_REGISTER(http, &http_cmds, "HTTP client commands", NULL);
 SHELL_CMD_REGISTER(https, &https_cmds, "HTTPS client commands", NULL);
 
-#endif /* CONFIG_SHELL */
+#endif /* CONFIG_SHELL_HTTP */

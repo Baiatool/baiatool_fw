@@ -1,0 +1,28 @@
+menu "Settings and shell modules"
+    config SHELL_HTTP
+        bool "Enable HTTP shell commands"
+        default n
+        help
+            Enable HTTP shell commands for the application.
+    config SHELL_LED
+        bool "Enable LED shell commands"
+        default n
+        help
+            Enable LED shell commands for the application.
+    config SHELL_STORAGE
+        bool "Enable Storage shell commands"
+        default n
+        help
+            Enable Storage shell commands for the application.
+    config SHELL_WIFI
+        bool "Enable Wi-Fi shell commands"
+        default n
+        help
+            Enable Wi-Fi shell commands for the application.
+
+    config SHELL_SETTINGS
+        bool "Enable shell settings commands"
+        default n
+        help
+            Enable shell commands for managing application settings.
+endmenu

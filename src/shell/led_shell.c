@@ -18,7 +18,7 @@
  *
  *******************************************************************/
 
-#if CONFIG_SHELL
+#if CONFIG_SHELL_LED
 
 #include <string.h>
 #include <zephyr/kernel.h>
@@ -112,4 +112,4 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 
 SHELL_CMD_REGISTER(led, &led_cmds, "LED management", NULL);
 
-#endif /* CONFIG_SHELL */
+#endif /* CONFIG_SHELL_LED */
