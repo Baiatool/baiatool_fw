@@ -46,12 +46,24 @@ header {
 
 /* ── Layout ── */
 main {
-  max-width: 720px;
+  max-width: 1000px;
   margin: 32px auto;
   padding: 0 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.col-left,
+.col-right {
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+@media (max-width: 680px) {
+  main { grid-template-columns: 1fr; }
 }
 
 /* ── Card ── */
@@ -147,7 +159,7 @@ label {
 }
 
 input[type="text"],
-input[type="datetime-local"] {
+input[type="time"] {
   font-family: 'Roboto', sans-serif;
   font-size: 0.9rem;
   padding: 8px 12px;

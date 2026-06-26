@@ -18,84 +18,83 @@
 
   <main>
 
-    <!-- Status card -->
-    <section class="card">
-      <h2>Workstation Status</h2>
-      <div id="status-body">
-        {% if schedule %}
-          <div class="status-row">
-            <span class="badge badge--{{ schedule.status }}">{{ schedule.status }}</span>
-            <span class="user-id">{{ schedule.user_id }}</span>
-          </div>
-          <div class="time-row">
-            <div>
-              <span class="label">Start</span>
-              <span>{{ schedule.start_time.strftime('%Y-%m-%d %H:%M') }}</span>
-            </div>
-            <div>
-              <span class="label">End</span>
-              <span>{{ schedule.end_time.strftime('%Y-%m-%d %H:%M') }}</span>
-            </div>
-            <div>
-              <span class="label">Last command</span>
-              <span>{{ schedule.last_cmd }}</span>
-            </div>
-          </div>
-        {% else %}
-          <p class="idle">Workstation available</p>
+    <!-- Left column: registration form -->
+    <div class="col-left">
+      <section class="card">
+        <h2>Register Schedule</h2>
+        {% if error %}
+          <p class="error">{{ error }}</p>
         {% endif %}
-      </div>
-    </section>
-
-    <!-- Registration form -->
-    <section class="card">
-      <h2>Register Schedule</h2>
-      {% if error %}
-        <p class="error">{{ error }}</p>
-      {% endif %}
-      <form method="POST" action="/ui/schedule">
-        <div class="field">
-          <label for="user_id">NFC User ID</label>
-          <input type="text" id="user_id" name="user_id"
-                 maxlength="16" placeholder="e.g. A3F20C1B"
-                 required autocomplete="off">
-        </div>
-        <div class="field-row">
+        <form method="POST" action="/ui/schedule">
           <div class="field">
-            <label for="start_time">Start</label>
-            <input type="datetime-local" id="start_time" name="start_time" required>
+            <label for="user_id">NFC User ID</label>
+            <input type="text" id="user_id" name="user_id"
+                   maxlength="16" placeholder="e.g. A3F20C1B"
+                   required autocomplete="off">
           </div>
           <div class="field">
-            <label for="end_time">End</label>
-            <input type="datetime-local" id="end_time" name="end_time" required>
+            <label for="start_time">Start time</label>
+            <input type="time" id="start_time" name="start_time" required>
           </div>
-        </div>
-        <button type="submit">Register</button>
-      </form>
-    </section>
+          <button type="submit">Register</button>
+        </form>
+      </section>
+    </div>
 
-    <!-- Event log -->
-    <section class="card" id="events-card" {% if not events %}style="display:none"{% endif %}>
-      <h2>Event Log</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Time</th>
-            <th>Event</th>
-            <th>User ID</th>
-          </tr>
-        </thead>
-        <tbody id="events-body">
-          {% for e in events %}
-          <tr>
-            <td class="mono">{{ e.timestamp }}</td>
-            <td>{{ e.event }}</td>
-            <td class="mono">{{ e.user_id }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </section>
+    <!-- Right column: status + event log -->
+    <div class="col-right">
+
+      <section class="card">
+        <h2>Workstation Status</h2>
+        <div id="status-body">
+          {% if schedule %}
+            <div class="status-row">
+              <span class="badge badge--{{ schedule.status }}">{{ schedule.status }}</span>
+              <span class="user-id">{{ schedule.user_id }}</span>
+            </div>
+            <div class="time-row">
+              <div>
+                <span class="label">Start</span>
+                <span>{{ schedule.start_time.strftime('%H:%M') }}</span>
+              </div>
+              <div>
+                <span class="label">End</span>
+                <span>{{ schedule.end_time.strftime('%H:%M') }}</span>
+              </div>
+              <div>
+                <span class="label">Last command</span>
+                <span>{{ schedule.last_cmd }}</span>
+              </div>
+            </div>
+          {% else %}
+            <p class="idle">Workstation available</p>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="card" id="events-card" {% if not events %}style="display:none"{% endif %}>
+        <h2>Event Log</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Event</th>
+              <th>User ID</th>
+            </tr>
+          </thead>
+          <tbody id="events-body">
+            {% for e in events %}
+            <tr>
+              <td class="mono">{{ e.timestamp }}</td>
+              <td>{{ e.event }}</td>
+              <td class="mono">{{ e.user_id }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+
+    </div><!-- .col-right -->
 
   </main>
 
