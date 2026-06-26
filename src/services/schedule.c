@@ -70,8 +70,9 @@ static void schedule_chan_listener(const struct zbus_channel *chan)
 			goto finish;
 		}
 
-		if (state->last_cmd != SCHEDULE_CMD_END_USE) {
-			LOG_ERR("Last command is not END_USE: %d", state->last_cmd);
+		if (state->last_cmd != SCHEDULE_CMD_END_USE &&
+		    state->last_cmd != SCHEDULE_CMD_LOAD) {
+			LOG_ERR("Last command is not END_USE or LOAD: %d", state->last_cmd);
 
 			goto finish;
 		}
@@ -138,6 +139,27 @@ static void schedule_chan_listener(const struct zbus_channel *chan)
 		state->start_time = 0;
 		state->end_time = 0;
 		state->last_cmd = SCHEDULE_CMD_END_USE;
+		changed = true;
+
+		goto finish;
+
+	case SCHEDULE_CMD_LOAD:
+		if (memcmp(msg->user_id, empty_id, CONFIG_MAX_ID_LENGTH) == 0) {
+			LOG_ERR("LOAD: user_id cannot be empty");
+			goto finish;
+		}
+
+		if (state->user_id[0] != 0U) {
+			LOG_INF("LOAD: schedule already loaded for user %s, skipping",
+				state->user_id);
+			goto finish;
+		}
+
+		LOG_INF("Loading schedule for user ID: %s", msg->user_id);
+		memcpy(state->user_id, msg->user_id, CONFIG_MAX_ID_LENGTH);
+		state->start_time = msg->start_time;
+		state->end_time = msg->end_time;
+		state->last_cmd = SCHEDULE_CMD_LOAD;
 		changed = true;
 
 		goto finish;
