@@ -18,7 +18,7 @@
  *
  *******************************************************************/
 
-#if CONFIG_SHELL
+#if CONFIG_SHELL_SETTINGS
 
 #include "components/settings.h"
 
@@ -71,4 +71,4 @@ SHELL_STATIC_SUBCMD_SET_CREATE(settings_cmds,
 
 SHELL_CMD_REGISTER(settings, &settings_cmds, "Settings commands.", NULL);
 
-#endif /* CONFIG_SHELL */
+#endif /* CONFIG_SHELL_SETTINGS */

@@ -18,7 +18,7 @@
  *
  *******************************************************************/
 
-#if CONFIG_SHELL
+#if CONFIG_SHELL_WIFI
 
 #include <string.h>
 #include <zephyr/kernel.h>
@@ -138,4 +138,4 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 
 SHELL_CMD_REGISTER(wifi, &wifi_cmds, "WiFi management", NULL);
 
-#endif /* CONFIG_SHELL */
+#endif /* CONFIG_SHELL_WIFI */

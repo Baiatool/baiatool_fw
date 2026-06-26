@@ -8,6 +8,7 @@ rsource "Kconfig.schedule"
 rsource "Kconfig.sntp"
 rsource "Kconfig.led"
 rsource "Kconfig.button"
+rsource "Kconfig.settings"
 
 module = MAIN
 module-str = main

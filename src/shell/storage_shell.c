@@ -18,7 +18,7 @@
  *
  *******************************************************************/
 
-#if CONFIG_SHELL
+#if CONFIG_SHELL_STORAGE
 
 #include "components/storage.h"
 
@@ -142,4 +142,4 @@ SHELL_STATIC_SUBCMD_SET_CREATE(storage_cmds,
 
 SHELL_CMD_REGISTER(storage, &storage_cmds, "NVS storage commands.", NULL);
 
-#endif /* CONFIG_SHELL */
+#endif /* CONFIG_SHELL_STORAGE */
