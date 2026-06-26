@@ -18,8 +18,6 @@ class ScheduleStore:
         self._schedule = None  # baiatool_schedule_state + status field
         self._events = []      # list of {timestamp, event, user_id}
 
-    # ── accessors ──────────────────────────────────────────────────────────────
-
     @property
     def schedule(self):
         return self._schedule
@@ -27,8 +25,6 @@ class ScheduleStore:
     @property
     def events(self):
         return self._events
-
-    # ── mutations ──────────────────────────────────────────────────────────────
 
     def register(self, user_id: str, start_dt: datetime, end_dt: datetime) -> bool:
         """Returns True on success, False if a pending/active slot already exists."""
@@ -69,8 +65,6 @@ class ScheduleStore:
         self._schedule["last_cmd"] = "extend_time"
         self._log("extended", user_id)
 
-    # ── serializers ────────────────────────────────────────────────────────────
-
     def to_firmware_json(self) -> dict:
         """baiatool_schedule_state shape — consumed by the firmware."""
         s = self._schedule
@@ -95,8 +89,6 @@ class ScheduleStore:
             "events": self._events[:10],
         }
 
-    # ── internals ──────────────────────────────────────────────────────────────
-
     def _check(self, user_id: str) -> None:
         if self._schedule is None:
             abort(404)
@@ -113,9 +105,6 @@ class ScheduleStore:
 
 
 store = ScheduleStore()
-
-
-# ── Browser routes ─────────────────────────────────────────────────────────────
 
 @app.get("/")
 def index():
@@ -148,9 +137,6 @@ def schedule_register():
         ), 409
 
     return redirect(url_for("index"))
-
-
-# ── Firmware API routes ─────────────────────────────────────────────────────────
 
 @app.get("/api/status")
 def api_status():
