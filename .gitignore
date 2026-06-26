@@ -111,3 +111,8 @@ TextEncoding.txt
 YAMLLint.txt
 
 /.venv
+
+CLAUDE*
+.claude*
+
+__pycache__/*
