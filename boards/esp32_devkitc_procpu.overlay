@@ -1,3 +1,30 @@
+/ {
+	aliases {
+		red-led = &led0;
+		green-led = &led1;
+		blue-led = &led2;
+	};
+
+	gpio_leds {
+		compatible = "gpio-leds";
+
+		led0: red {
+			gpios = <&gpio0 26 GPIO_ACTIVE_LOW>;
+			label = "Red led";
+		};
+
+		led1: green {
+			gpios = <&gpio0 14 GPIO_ACTIVE_LOW>;
+			label = "Green led";
+		};
+
+		led2: blue {
+			gpios = <&gpio0 27 GPIO_ACTIVE_LOW>;
+			label = "Blue led";
+		};
+	};
+};
+
 &flash0 {
 	partitions {
 		storage_partition: partition@3b0000 {

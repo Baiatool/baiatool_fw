@@ -1,0 +1,31 @@
+module = LED
+module-str = led
+source "subsys/logging/Kconfig.template.log_config"
+
+menu "Led service"
+    config LED_CMD_SUB_QUEUE_SIZE
+        int "Size of the LED command subscription queue."
+        default 2
+
+    config LED_BLINK_TIME_SLOW_MS
+      int "LED time to slow interval in milliseconds"
+      default 800
+
+    config LED_BLINK_TIME_FAST_MS
+      int "LED time to fast interval in milliseconds"
+      default 200
+
+    config LED_THREAD_STACK_SIZE
+      int "LED thread stack size"
+      default 256
+      help
+        Set the stack size for the LED thread.
+        This value determines the amount of stack memory allocated for the LED thread.
+
+    config LED_THREAD_PRIORITY
+      int "LED thread priority"
+      default 7
+      help
+        Set the priority for the LED thread.
+        This value determines the scheduling priority of the LED thread.
+endmenu
