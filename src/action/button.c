@@ -38,8 +38,8 @@ static void wps_work_handler(struct k_work *work)
 	ARG_UNUSED(work);
 
 	struct wifi_cmd_msg cmd = {.type = WIFI_CMD_CONNECT_WPS};
-	int ret = zbus_chan_pub(&wifi_cmd_chan, &cmd, K_MSEC(100));
 
+	int ret = zbus_chan_pub(&wifi_cmd_chan, &cmd, K_MSEC(100));
 	if (ret < 0) {
 		LOG_ERR("Failed to publish WPS cmd: %d", ret);
 	}
@@ -77,8 +77,8 @@ static int button_init(void)
 		return ret;
 	}
 
-	gpio_init_callback(&btn_cb, btn_wps_pressed, BIT(btn_wps.pin));
-	gpio_add_callback(btn_wps.port, &btn_cb);
+	(void)gpio_init_callback(&btn_cb, btn_wps_pressed, BIT(btn_wps.pin));
+	(void)gpio_add_callback(btn_wps.port, &btn_cb);
 
 	k_work_init(&wps_work, wps_work_handler);
 

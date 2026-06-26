@@ -22,9 +22,6 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/zbus/zbus.h>
 
-
-
-
 LOG_MODULE_REGISTER(main, CONFIG_MAIN_LOG_LEVEL);
 
 int main(void)
