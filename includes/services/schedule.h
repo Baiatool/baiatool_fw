@@ -45,6 +45,7 @@ enum schedule_cmd_id {
 	SCHEDULE_CMD_FIRST_USE = 0, /**< Command to start using the workstation. */
 	SCHEDULE_CMD_EXTEND_TIME,   /**< Command to extend workstation usage time. */
 	SCHEDULE_CMD_END_USE,       /**< Command to end workstation use. */
+	SCHEDULE_CMD_LOAD,          /**< Command to load a reservation fetched from the server. */
 	SCHEDULE_CMD_AMOUNT         /**< Amount of commands available. */
 };
 
@@ -67,6 +68,8 @@ struct baiatool_schedule_state {
 struct baiatool_schedule_cmd {
 	enum schedule_cmd_id cmd_id;           /**< ID of the command */
 	uint8_t user_id[CONFIG_MAX_ID_LENGTH]; /**< ID from the user who sent the command */
+	time_t start_time;                     /**< Reservation start (used by SCHEDULE_CMD_LOAD) */
+	time_t end_time;                       /**< Reservation end   (used by SCHEDULE_CMD_LOAD) */
 };
 
 #endif /* SERVICE_SCHEDULE_H */

@@ -25,7 +25,6 @@
 #include <zephyr/device.h>
 #include <zephyr/drivers/flash.h>
 #include <zephyr/kvss/nvs.h>
-#include <zephyr/kernel.h>
 #include <zephyr/storage/flash_map.h>
 
 /**
@@ -33,13 +32,12 @@
  *
  */
 enum baiatool_storage_id {
-    BAIATOOL_NULL_NVS_ID = 0,       /**< ID invalid for NVS */
-    BAIATOOL_SCHEDULE_NVS_ID,       /**< ID of the NVS for the current schedule data */
-    BAIATOOL_PROVISIONING_NVS_ID,   /**< ID of the NVS for the provisioning data */
-    BAIATOOL_NET_SETTINGS_NVS_ID,   /**< ID of the NVS for the network settings */
-    BAIATOOL_NVS_ID_AMOUNT          /**< Amount of NVS IDs */
+	BAIATOOL_NULL_NVS_ID = 0,     /**< ID invalid for NVS */
+	BAIATOOL_SCHEDULE_NVS_ID,     /**< ID of the NVS for the current schedule data */
+	BAIATOOL_PROVISIONING_NVS_ID, /**< ID of the NVS for the provisioning data */
+	BAIATOOL_NET_SETTINGS_NVS_ID, /**< ID of the NVS for the network settings */
+	BAIATOOL_NVS_ID_AMOUNT        /**< Amount of NVS IDs */
 };
-
 
 /**
  * @brief Function to add a new object to the flash memory.
