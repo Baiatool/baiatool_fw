@@ -41,7 +41,7 @@
       </section>
     </div>
 
-    <!-- Right column: status + event log -->
+    <!-- Right column: status + queue + event log -->
     <div class="col-right">
 
       <section class="card">
@@ -55,11 +55,11 @@
             <div class="time-row">
               <div>
                 <span class="label">Start</span>
-                <span>{{ schedule.start_time.strftime('%H:%M') }}</span>
+                <span>{{ schedule.start_time }}</span>
               </div>
               <div>
                 <span class="label">End</span>
-                <span>{{ schedule.end_time.strftime('%H:%M') }}</span>
+                <span>{{ schedule.end_time }}</span>
               </div>
               <div>
                 <span class="label">Last command</span>
@@ -70,6 +70,28 @@
             <p class="idle">Workstation available</p>
           {% endif %}
         </div>
+      </section>
+
+      <section class="card" id="queue-card" {% if not queue %}style="display:none"{% endif %}>
+        <h2>Queue</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>User ID</th>
+              <th>Start</th>
+              <th>End</th>
+            </tr>
+          </thead>
+          <tbody id="queue-body">
+            {% for s in queue %}
+            <tr>
+              <td class="mono">{{ s.user_id }}</td>
+              <td>{{ s.start_time }}</td>
+              <td>{{ s.end_time }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </section>
 
       <section class="card" id="events-card" {% if not events %}style="display:none"{% endif %}>
@@ -115,6 +137,16 @@
         </div>`;
     }
 
+    function renderQueue(queue) {
+      return queue.map(s =>
+        `<tr>
+           <td class="mono">${s.user_id}</td>
+           <td>${s.start_time}</td>
+           <td>${s.end_time}</td>
+         </tr>`
+      ).join('');
+    }
+
     function renderEvents(evts) {
       return evts.map(e =>
         `<tr>
@@ -130,6 +162,15 @@
         .then(r => r.json())
         .then(data => {
           document.getElementById('status-body').innerHTML = renderStatus(data.schedule);
+
+          const qcard = document.getElementById('queue-card');
+          const qbody = document.getElementById('queue-body');
+          if (data.queue && data.queue.length > 0) {
+            qbody.innerHTML = renderQueue(data.queue);
+            qcard.style.display = '';
+          } else {
+            qcard.style.display = 'none';
+          }
 
           const card = document.getElementById('events-card');
           const tbody = document.getElementById('events-body');

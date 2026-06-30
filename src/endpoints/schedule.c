@@ -36,14 +36,12 @@ LOG_MODULE_REGISTER(schedule_endpoint, CONFIG_SCHEDULE_ENDPOINT_LOG_LEVEL);
 
 struct schedule_server_resp {
 	const char *user_id;
-	const char *last_cmd;
 	int32_t start_time;
 	int32_t end_time;
 };
 
 static const struct json_obj_descr resp_descr[] = {
 	JSON_OBJ_DESCR_PRIM(struct schedule_server_resp, user_id, JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(struct schedule_server_resp, last_cmd, JSON_TOK_STRING),
 	JSON_OBJ_DESCR_PRIM(struct schedule_server_resp, start_time, JSON_TOK_NUMBER),
 	JSON_OBJ_DESCR_PRIM(struct schedule_server_resp, end_time, JSON_TOK_NUMBER),
 };
@@ -79,7 +77,8 @@ int schedule_endpoint_fetch(int sock, const char *host, const char *port)
 {
 	int ret;
 	int parsed;
-	struct schedule_server_resp resp = {NULL, NULL, 0, 0};
+	static const char empty[] = "";
+	struct schedule_server_resp resp = {empty, 0, 0};
 	struct baiatool_schedule_cmd cmd;
 
 	data_response.body_len = 0;
@@ -95,7 +94,7 @@ int schedule_endpoint_fetch(int sock, const char *host, const char *port)
 	}
 
 	if (data_response.s_http_status != 200) {
-		LOG_INF("no schedule available (HTTP %u)", data_response.s_http_status);
+		LOG_INF("no schedule available (HTTP %d)", data_response.s_http_status);
 		return 0;
 	}
 
@@ -112,22 +111,12 @@ int schedule_endpoint_fetch(int sock, const char *host, const char *port)
 		return -EINVAL;
 	}
 
-	/* Bitmask: bits 0-3 map to the four descriptor fields */
-	if ((parsed & 0xF) != 0xF) {
-		LOG_ERR("JSON missing required fields, mask: 0x%x", parsed);
-		return -EINVAL;
-	}
-
-	if (resp.user_id == NULL || resp.user_id[0] == '\0') {
-		LOG_ERR("empty user_id in response");
-		return -EINVAL;
-	}
-
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.cmd_id = SCHEDULE_CMD_LOAD;
 	cmd.start_time = (time_t)resp.start_time;
 	cmd.end_time = (time_t)resp.end_time;
 	memcpy(cmd.user_id, resp.user_id, CONFIG_MAX_ID_LENGTH - 1);
+	cmd.user_id[CONFIG_MAX_ID_LENGTH - 1] = '\0';
 
 	ret = zbus_chan_pub(&schedule_cmd_chan, &cmd, K_MSEC(300));
 	if (ret != 0) {

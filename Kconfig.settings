@@ -25,4 +25,10 @@ menu "Settings and shell modules"
         default n
         help
             Enable shell commands for managing application settings.
+
+    config SHELL_ENDPOINT
+        bool "Enable endpoint shell commands"
+        default n
+        help
+            Enable shell commands for manually triggering HTTP endpoint functions.
 endmenu

@@ -150,9 +150,16 @@ static void schedule_chan_listener(const struct zbus_channel *chan)
 		}
 
 		if (state->user_id[0] != 0U) {
-			LOG_INF("LOAD: schedule already loaded for user %s, skipping",
-				state->user_id);
-			goto finish;
+			if (state->last_cmd != SCHEDULE_CMD_LOAD) {
+				LOG_INF("LOAD: session already active for user %s, skipping",
+					state->user_id);
+				goto finish;
+			}
+			if (msg->start_time >= state->start_time) {
+				LOG_INF("LOAD: incoming start_time not earlier, skipping");
+				goto finish;
+			}
+			LOG_INF("LOAD: replacing pending schedule with earlier reservation");
 		}
 
 		LOG_INF("Loading schedule for user ID: %s", msg->user_id);
