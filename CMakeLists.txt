@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.20.0)
 
-set(BOARD esp32_devkitc/esp32/procpu)
+# Supported boards:
+#   esp32c6_devkitc/esp32c6/hpcore  (default)
+#   esp32_devkitc/esp32/procpu
+if(NOT DEFINED BOARD)
+  set(BOARD esp32c6_devkitc/esp32c6/hpcore)
+endif()
 
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 
