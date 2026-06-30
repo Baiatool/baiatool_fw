@@ -1,0 +1,19 @@
+module = RFID
+module-str = rfid
+source "subsys/logging/Kconfig.template.log_config"
+
+menu "RFID service"
+    config RFID_THREAD_STACK_SIZE
+        int "RFID thread stack size."
+        default 1024
+        help
+            Set the stack size for the RFID thread.
+            This value determines the amount of stack memory allocated for the RFID thread.
+
+    config RFID_THREAD_PRIORITY
+        int "RFID thread priority."
+        default 5
+        help
+            Set the priority for the RFID thread.
+            This value determines the scheduling priority of the RFID thread.
+endmenu 

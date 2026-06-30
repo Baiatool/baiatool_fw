@@ -9,6 +9,7 @@ rsource "Kconfig.sntp"
 rsource "Kconfig.led"
 rsource "Kconfig.button"
 rsource "Kconfig.settings"
+rsource "Kconfig.rfid"
 
 module = MAIN
 module-str = main

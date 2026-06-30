@@ -445,14 +445,14 @@ static int mfrc522_init(const struct device *dev)
 		return ret;
 	}
 
-	/* Hardware reset */
-	ret = gpio_pin_set_dt(&cfg->reset, 0);
+	/* Hardware reset: assert RST low, then release high */
+	ret = gpio_pin_set_dt(&cfg->reset, 1);
 	if (ret != 0) {
 		LOG_DBG("mfrc522_init: gpio_pin_set_dt failed: %d", ret);
 		return ret;
 	}
 	k_msleep(50);
-	ret = gpio_pin_set_dt(&cfg->reset, 1);
+	ret = gpio_pin_set_dt(&cfg->reset, 0);
 	if (ret != 0) {
 		LOG_DBG("mfrc522_init: gpio_pin_set_dt failed: %d", ret);
 		return ret;
@@ -510,9 +510,14 @@ static int mfrc522_init(const struct device *dev)
 		LOG_ERR("mfrc522_init: failed to read VersionReg: %d", ret);
 		return ret;
 	}
-	if (ver != 0x91U && ver != 0x92U) {
-		LOG_ERR("mfrc522_init: unexpected VersionReg 0x%02X (want 0x91 or 0x92)", ver);
+	if (ver == 0x00U || ver == 0xFFU) {
+		LOG_ERR("mfrc522_init: VersionReg 0x%02X — no SPI communication", ver);
 		return -ENODEV;
+	}
+	if (ver != 0x91U && ver != 0x92U) {
+		LOG_WRN("mfrc522_init: clone IC detected (VersionReg=0x%02X), proceeding", ver);
+	} else {
+		LOG_INF("mfrc522_init: NXP IC v%u.0 detected", ver & 0x0FU);
 	}
 
 	LOG_INF("MFRC522 initialized");
