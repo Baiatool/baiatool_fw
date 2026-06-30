@@ -12,7 +12,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
-#include "drivers/mfrc522/mfrc522_chan.h"
+#include "drivers/mfrc522.h"
 
 LOG_MODULE_REGISTER(mfrc522, CONFIG_SENSOR_LOG_LEVEL);
 
@@ -51,7 +51,7 @@ LOG_MODULE_REGISTER(mfrc522, CONFIG_SENSOR_LOG_LEVEL);
 #define TRANSCEIVE_TIMEOUT_MS 200
 
 struct mfrc522_data {
-	uint8_t uid_bytes[MFRC522_UID_MAX_LEN];
+	uint8_t uid_bytes[CONFIG_MFRC522_UID_MAX_LEN];
 	uint8_t uid_len;
 	uint8_t sak;
 	bool	card_present;
@@ -282,7 +282,7 @@ static int chip_read_uid(const struct device *dev, uint8_t *uid_bytes, uint8_t *
 			 uint8_t *sak_out)
 {
 	uint8_t cl = PICC_CL1;
-	uint8_t out_uid[MFRC522_UID_MAX_LEN];
+	uint8_t out_uid[CONFIG_MFRC522_UID_MAX_LEN];
 	uint8_t out_len = 0U;
 	int ret;
 

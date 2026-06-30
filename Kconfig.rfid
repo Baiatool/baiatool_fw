@@ -1,5 +1,5 @@
-module = RFID
-module-str = rfid
+module = RFID_SERVICE
+module-str = rfid_service
 source "subsys/logging/Kconfig.template.log_config"
 
 menu "RFID service"
@@ -16,4 +16,10 @@ menu "RFID service"
         help
             Set the priority for the RFID thread.
             This value determines the scheduling priority of the RFID thread.
+
+    config MFRC522_UID_MAX_LEN
+        int "Maximum length of MFRC522 UID."
+        default 10
+        help
+            Set the maximum length for the MFRC522 UID.
 endmenu 

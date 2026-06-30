@@ -23,20 +23,19 @@
 
 #include <stdint.h>
 #include <zephyr/zbus/zbus.h>
-#include "drivers/mfrc522/mfrc522_chan.h"
 
 /**
  * @brief RFID event message structure.
- * 
+ *
  */
 struct rfid_event {
-	uint8_t uid_bytes[MFRC522_UID_MAX_LEN]; /**< UID bytes */
-	uint8_t uid_len; /**< Length of the UID in bytes */
+	uint8_t uid_bytes[CONFIG_MFRC522_UID_MAX_LEN]; /**< UID bytes */
+	uint8_t uid_len;                               /**< Length of the UID in bytes */
 };
 
 /**
- * @brief Construct a new zbus chan declare object
- * 
+ * @brief Declares the RFID channel.
+ *
  */
 ZBUS_CHAN_DECLARE(rfid_tag_chan);
 

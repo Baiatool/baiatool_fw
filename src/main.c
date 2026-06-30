@@ -17,10 +17,7 @@
  * @copyright Copyright (c) 2026
  *
  *******************************************************************/
-
-#include <zephyr/device.h>
-#include <zephyr/devicetree.h>
-#include <zephyr/drivers/sensor.h>
+ 
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 

@@ -1,6 +1,3 @@
-/* SPDX-License-Identifier: Apache-2.0 */
-#include <string.h>
-
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/sensor.h>
@@ -8,10 +5,10 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/zbus/zbus.h>
 
-#include "drivers/mfrc522/mfrc522_chan.h"
+#include "drivers/mfrc522.h"
 #include "services/rfid.h"
 
-LOG_MODULE_REGISTER(rfid, CONFIG_RFID_LOG_LEVEL);
+LOG_MODULE_REGISTER(rfid, CONFIG_RFID_SERVICE_LOG_LEVEL);
 
 static const struct device *s_rfid = DEVICE_DT_GET_ONE(nxp_mfrc522);
 
