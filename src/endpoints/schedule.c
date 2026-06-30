@@ -31,9 +31,6 @@
 
 LOG_MODULE_REGISTER(schedule_endpoint, CONFIG_SCHEDULE_ENDPOINT_LOG_LEVEL);
 
-#define RECV_BUF_SIZE 512
-#define BODY_BUF_SIZE 256
-
 struct schedule_server_resp {
 	const char *user_id;
 	int32_t start_time;
@@ -47,8 +44,8 @@ static const struct json_obj_descr resp_descr[] = {
 };
 
 static struct {
-	uint8_t recv_buf[RECV_BUF_SIZE];
-	char body_buf[BODY_BUF_SIZE];
+	uint8_t recv_buf[CONFIG_HTTP_RECV_BUF_SIZE];
+	char body_buf[CONFIG_HTTP_BODY_BUF_SIZE];
 	size_t body_len;
 	uint16_t s_http_status;
 } data_response;
