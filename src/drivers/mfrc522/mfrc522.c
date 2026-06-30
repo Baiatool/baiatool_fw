@@ -16,15 +16,12 @@
 
 LOG_MODULE_REGISTER(mfrc522, CONFIG_SENSOR_LOG_LEVEL);
 
-/* ── Register addresses ─────────────────────────────────────────────────── */
 #define REG_COMMAND	0x01U
-#define REG_COM_IE_N	0x02U
 #define REG_COM_IRQ	0x04U
 #define REG_DIV_IRQ	0x05U
 #define REG_ERROR	0x06U
 #define REG_FIFO_DATA	0x09U
 #define REG_FIFO_LEVEL	0x0AU
-#define REG_CONTROL	0x0CU
 #define REG_BIT_FRAMING 0x0DU
 #define REG_MODE	0x11U
 #define REG_TX_ASK	0x15U
@@ -35,15 +32,15 @@ LOG_MODULE_REGISTER(mfrc522, CONFIG_SENSOR_LOG_LEVEL);
 #define REG_T_RELOAD_L	0x2DU
 #define REG_CRC_RESULT_M 0x21U
 #define REG_CRC_RESULT_L 0x22U
+#define REG_VERSION	0x37U
 
-/* ── Commands ───────────────────────────────────────────────────────────── */
 #define CMD_IDLE	 0x00U
-#define CMD_CALC_CRC	 0x04U
+#define CMD_CALC_CRC	 0x03U
 #define CMD_TRANSCEIVE	 0x0CU
 #define CMD_SOFT_RESET	 0x0FU
 
-/* ── ISO 14443-A constants ──────────────────────────────────────────────── */
 #define PICC_REQA	  0x26U
+#define PICC_WUPA	  0x52U
 #define PICC_HLTA	  0x50U
 #define PICC_CT		  0x88U /* Cascade Tag byte */
 #define PICC_CL1	  0x93U
@@ -65,7 +62,6 @@ struct mfrc522_config {
 	struct gpio_dt_spec reset;
 };
 
-/* ── SPI helpers ────────────────────────────────────────────────────────── */
 
 static const struct spi_dt_spec *cfg_spi(const struct device *dev)
 {
@@ -93,12 +89,12 @@ static int reg_read(const struct device *dev, uint8_t addr, uint8_t *val)
 
 	ret = spi_transceive_dt(cfg_spi(dev), &tx_set, &rx_set);
 	if (ret == 0) {
+		LOG_DBG("reg_read: addr=0x%02X, val=0x%02X", addr, rx[1]);
 		*val = rx[1];
 	}
 	return ret;
 }
 
-/* ── Protocol helpers ───────────────────────────────────────────────────── */
 
 /*
  * Send tx_data, receive into rx_data via CMD_TRANSCEIVE.
@@ -114,35 +110,42 @@ static int transceive(const struct device *dev, const uint8_t *tx_data, uint8_t 
 
 	ret = reg_write(dev, REG_COMMAND, CMD_IDLE);
 	if (ret != 0) {
+		LOG_DBG("transceive: reg_write(CMD_IDLE) failed: %d", ret);
 		return ret;
 	}
 	ret = reg_write(dev, REG_COM_IRQ, 0x7FU); /* clear all IRQ flags */
 	if (ret != 0) {
+		LOG_DBG("transceive: reg_write(REG_COM_IRQ) failed: %d", ret);
 		return ret;
 	}
 	ret = reg_write(dev, REG_FIFO_LEVEL, 0x80U); /* flush FIFO */
 	if (ret != 0) {
+		LOG_DBG("transceive: reg_write(REG_FIFO_LEVEL) failed: %d", ret);
 		return ret;
 	}
 
 	for (uint8_t i = 0; i < tx_len; i++) {
 		ret = reg_write(dev, REG_FIFO_DATA, tx_data[i]);
 		if (ret != 0) {
+			LOG_DBG("transceive: reg_write(REG_FIFO_DATA) failed: %d", ret);
 			return ret;
 		}
 	}
 
 	ret = reg_write(dev, REG_BIT_FRAMING, last_bits & 0x07U);
 	if (ret != 0) {
+		LOG_DBG("transceive: reg_write(REG_BIT_FRAMING) failed: %d", ret);
 		return ret;
 	}
 	ret = reg_write(dev, REG_COMMAND, CMD_TRANSCEIVE);
 	if (ret != 0) {
+		LOG_DBG("transceive: reg_write(REG_COMMAND) failed: %d", ret);
 		return ret;
 	}
 	/* StartSend triggers transmission */
 	ret = reg_write(dev, REG_BIT_FRAMING, (last_bits & 0x07U) | 0x80U);
 	if (ret != 0) {
+		LOG_DBG("transceive: reg_write(REG_BIT_FRAMING) failed: %d", ret);
 		return ret;
 	}
 
@@ -150,6 +153,7 @@ static int transceive(const struct device *dev, const uint8_t *tx_data, uint8_t 
 	do {
 		ret = reg_read(dev, REG_COM_IRQ, &irq);
 		if (ret != 0) {
+			LOG_DBG("transceive: reg_read(REG_COM_IRQ) failed: %d", ret);
 			return ret;
 		}
 		k_msleep(1);
@@ -160,19 +164,23 @@ static int transceive(const struct device *dev, const uint8_t *tx_data, uint8_t 
 	reg_write(dev, REG_COMMAND, CMD_IDLE);
 
 	if (timeout == 0 || (irq & 0x01U)) {
+		LOG_DBG("transceive: timed out");
 		return -ETIMEDOUT;
 	}
 
 	ret = reg_read(dev, REG_ERROR, &err);
 	if (ret != 0) {
+		LOG_DBG("transceive: reg_read(REG_ERROR) failed: %d", ret);
 		return ret;
 	}
 	if (err & 0x1FU) { /* BufferOvfl | CollErr | CRCErr | ParityErr | ProtocolErr */
+		LOG_DBG("transceive: error detected");
 		return -EIO;
 	}
 
 	ret = reg_read(dev, REG_FIFO_LEVEL, &n);
 	if (ret != 0) {
+		LOG_DBG("transceive: reg_read(REG_FIFO_LEVEL) failed: %d", ret);
 		return ret;
 	}
 
@@ -181,6 +189,7 @@ static int transceive(const struct device *dev, const uint8_t *tx_data, uint8_t 
 	for (uint8_t i = 0; i < to_read; i++) {
 		ret = reg_read(dev, REG_FIFO_DATA, &rx_data[i]);
 		if (ret != 0) {
+			LOG_DBG("transceive: reg_read(REG_FIFO_DATA) failed: %d", ret);
 			return ret;
 		}
 	}
@@ -197,32 +206,38 @@ static int calc_crc(const struct device *dev, const uint8_t *data, uint8_t len,
 
 	ret = reg_write(dev, REG_COMMAND, CMD_IDLE);
 	if (ret != 0) {
+		LOG_DBG("calc_crc: reg_write(CMD_IDLE) failed: %d", ret);
 		return ret;
 	}
 	ret = reg_write(dev, REG_DIV_IRQ, 0x04U); /* clear CRCIRq */
 	if (ret != 0) {
+		LOG_DBG("calc_crc: reg_write(REG_DIV_IRQ) failed: %d", ret);
 		return ret;
 	}
 	ret = reg_write(dev, REG_FIFO_LEVEL, 0x80U); /* flush FIFO */
 	if (ret != 0) {
+		LOG_DBG("calc_crc: reg_write(REG_FIFO_LEVEL) failed: %d", ret);
 		return ret;
 	}
 
 	for (uint8_t i = 0; i < len; i++) {
 		ret = reg_write(dev, REG_FIFO_DATA, data[i]);
 		if (ret != 0) {
+			LOG_DBG("calc_crc: reg_write(REG_FIFO_DATA) failed: %d", ret);
 			return ret;
 		}
 	}
 
 	ret = reg_write(dev, REG_COMMAND, CMD_CALC_CRC);
 	if (ret != 0) {
+		LOG_DBG("calc_crc: reg_write(REG_COMMAND) failed: %d", ret);
 		return ret;
 	}
 
 	do {
 		ret = reg_read(dev, REG_DIV_IRQ, &irq);
 		if (ret != 0) {
+			LOG_DBG("calc_crc: reg_read(REG_DIV_IRQ) failed: %d", ret);
 			return ret;
 		}
 		k_msleep(1);
@@ -230,32 +245,35 @@ static int calc_crc(const struct device *dev, const uint8_t *data, uint8_t len,
 	} while (!(irq & 0x04U) && timeout > 0);
 
 	if (timeout == 0) {
+		LOG_DBG("calc_crc: timed out");
 		return -ETIMEDOUT;
 	}
 
 	ret = reg_write(dev, REG_COMMAND, CMD_IDLE);
 	if (ret != 0) {
+		LOG_DBG("calc_crc: reg_write(CMD_IDLE) failed: %d", ret);
 		return ret;
 	}
 	ret = reg_read(dev, REG_CRC_RESULT_L, crc_l);
 	if (ret != 0) {
+		LOG_DBG("calc_crc: reg_read(REG_CRC_RESULT_L) failed: %d", ret);
 		return ret;
 	}
 	ret = reg_read(dev, REG_CRC_RESULT_M, crc_h);
 	if (ret != 0) {
+		LOG_DBG("calc_crc: reg_read(REG_CRC_RESULT_M) failed: %d", ret);
 		return ret;
 	}
 
 	return 0;
 }
 
-/* ── Card detection and UID read ────────────────────────────────────────── */
 
-/* Returns true if REQA yields a valid ATQA response. */
-static bool chip_is_new_card(const struct device *dev)
+/* Returns true if WUPA yields a valid ATQA response (detects both IDLE and HALTed cards). */
+static bool chip_card_present(const struct device *dev)
 {
 	uint8_t rx[2];
-	uint8_t req = PICC_REQA;
+	uint8_t req = PICC_WUPA;
 
 	return transceive(dev, &req, 1U, rx, sizeof(rx), 7U) == 2;
 }
@@ -274,11 +292,13 @@ static int chip_read_uid(const struct device *dev, uint8_t *uid_bytes, uint8_t *
 
 		ret = transceive(dev, anticoll, sizeof(anticoll), rx, sizeof(rx), 0U);
 		if (ret < 5) {
+			LOG_DBG("chip_read_uid: transceive failed: %d", ret);
 			return (ret < 0) ? ret : -EIO;
 		}
 
 		/* BCC check */
 		if ((rx[0] ^ rx[1] ^ rx[2] ^ rx[3]) != rx[4]) {
+			LOG_DBG("chip_read_uid: BCC check failed");
 			return -EBADMSG;
 		}
 
@@ -292,6 +312,7 @@ static int chip_read_uid(const struct device *dev, uint8_t *uid_bytes, uint8_t *
 
 		ret = calc_crc(dev, buf, 7U, &crc_l, &crc_h);
 		if (ret != 0) {
+			LOG_DBG("chip_read_uid: calc_crc failed: %d", ret);
 			return ret;
 		}
 		buf[7] = crc_l;
@@ -301,6 +322,7 @@ static int chip_read_uid(const struct device *dev, uint8_t *uid_bytes, uint8_t *
 
 		ret = transceive(dev, buf, 9U, sel_rx, sizeof(sel_rx), 0U);
 		if (ret < 1) {
+			LOG_DBG("chip_read_uid: transceive failed: %d", ret);
 			return (ret < 0) ? ret : -EIO;
 		}
 		*sak_out = sel_rx[0];
@@ -342,7 +364,6 @@ static int chip_read_uid(const struct device *dev, uint8_t *uid_bytes, uint8_t *
 	return 0;
 }
 
-/* ── Sensor driver API ──────────────────────────────────────────────────── */
 
 static int mfrc522_sample_fetch(const struct device *dev, enum sensor_channel chan)
 {
@@ -350,8 +371,9 @@ static int mfrc522_sample_fetch(const struct device *dev, enum sensor_channel ch
 
 	ARG_UNUSED(chan);
 
-	data->card_present = chip_is_new_card(dev);
+	data->card_present = chip_card_present(dev);
 	if (!data->card_present) {
+		LOG_DBG("mfrc522_sample_fetch: no card present");
 		return 0;
 	}
 	return chip_read_uid(dev, data->uid_bytes, &data->uid_len, &data->sak);
@@ -369,6 +391,10 @@ static int mfrc522_channel_get(const struct device *dev, enum sensor_channel cha
 		return 0;
 	case SENSOR_CHAN_MFRC522_UID:
 		val->val1 = data->uid_len;
+		if (data->uid_len > sizeof(val->val2)) {
+			LOG_WRN("UID %u bytes truncated to %zu in val2",
+				data->uid_len, sizeof(val->val2));
+		}
 		memcpy(&val->val2, data->uid_bytes, MIN(data->uid_len, sizeof(val->val2)));
 		return 0;
 	case SENSOR_CHAN_MFRC522_SAK:
@@ -385,7 +411,6 @@ static const struct sensor_driver_api mfrc522_api = {
 	.channel_get  = mfrc522_channel_get,
 };
 
-/* ── Init ───────────────────────────────────────────────────────────────── */
 
 static int antenna_on(const struct device *dev)
 {
@@ -394,6 +419,7 @@ static int antenna_on(const struct device *dev)
 
 	ret = reg_read(dev, REG_TX_CONTROL, &val);
 	if (ret != 0) {
+		LOG_DBG("antenna_on: reg_read(REG_TX_CONTROL) failed: %d", ret);
 		return ret;
 	}
 	return reg_write(dev, REG_TX_CONTROL, val | 0x03U);
@@ -415,62 +441,84 @@ static int mfrc522_init(const struct device *dev)
 
 	ret = gpio_pin_configure_dt(&cfg->reset, GPIO_OUTPUT_ACTIVE);
 	if (ret != 0) {
+		LOG_DBG("mfrc522_init: gpio_pin_configure_dt failed: %d", ret);
 		return ret;
 	}
 
 	/* Hardware reset */
 	ret = gpio_pin_set_dt(&cfg->reset, 0);
 	if (ret != 0) {
+		LOG_DBG("mfrc522_init: gpio_pin_set_dt failed: %d", ret);
 		return ret;
 	}
 	k_msleep(50);
 	ret = gpio_pin_set_dt(&cfg->reset, 1);
 	if (ret != 0) {
+		LOG_DBG("mfrc522_init: gpio_pin_set_dt failed: %d", ret);
 		return ret;
 	}
 	k_msleep(50);
 
 	ret = reg_write(dev, REG_COMMAND, CMD_SOFT_RESET);
 	if (ret != 0) {
+		LOG_DBG("mfrc522_init: reg_write failed: %d", ret);
 		return ret;
 	}
 	k_msleep(50);
 
 	ret = reg_write(dev, REG_T_MODE, 0x80U); /* TAuto = 1 */
 	if (ret != 0) {
+		LOG_DBG("mfrc522_init: reg_write failed: %d", ret);
 		return ret;
 	}
 	ret = reg_write(dev, REG_T_PRESCALER, 0xA9U);
 	if (ret != 0) {
+		LOG_DBG("mfrc522_init: reg_write failed: %d", ret);
 		return ret;
 	}
 	ret = reg_write(dev, REG_T_RELOAD_H, 0x03U);
 	if (ret != 0) {
+		LOG_DBG("mfrc522_init: reg_write failed: %d", ret);
 		return ret;
 	}
 	ret = reg_write(dev, REG_T_RELOAD_L, 0xE8U);
 	if (ret != 0) {
+		LOG_DBG("mfrc522_init: reg_write failed: %d", ret);
 		return ret;
 	}
 	ret = reg_write(dev, REG_TX_ASK, 0x40U); /* 100% ASK */
 	if (ret != 0) {
+		LOG_DBG("mfrc522_init: reg_write failed: %d", ret);
 		return ret;
 	}
 	ret = reg_write(dev, REG_MODE, 0x3DU); /* CRC preset 0x6363 */
 	if (ret != 0) {
+		LOG_DBG("mfrc522_init: reg_write failed: %d", ret);
 		return ret;
 	}
 
 	ret = antenna_on(dev);
 	if (ret != 0) {
+		LOG_DBG("mfrc522_init: antenna_on failed: %d", ret);
 		return ret;
+	}
+
+	uint8_t ver;
+
+	ret = reg_read(dev, REG_VERSION, &ver);
+	if (ret != 0) {
+		LOG_ERR("mfrc522_init: failed to read VersionReg: %d", ret);
+		return ret;
+	}
+	if (ver != 0x91U && ver != 0x92U) {
+		LOG_ERR("mfrc522_init: unexpected VersionReg 0x%02X (want 0x91 or 0x92)", ver);
+		return -ENODEV;
 	}
 
 	LOG_INF("MFRC522 initialized");
 	return 0;
 }
 
-/* ── Device instantiation ───────────────────────────────────────────────── */
 
 #define MFRC522_DEFINE(inst)                                                               \
 	static struct mfrc522_data mfrc522_data_##inst;                                    \

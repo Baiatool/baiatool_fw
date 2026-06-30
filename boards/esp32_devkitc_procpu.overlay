@@ -1,3 +1,5 @@
+#include <zephyr/dt-bindings/pinctrl/esp32-pinctrl.h>
+
 / {
 	aliases {
 		red-led = &led0;
@@ -31,7 +33,7 @@
 
 		btn: button {
 			label = "WPS";
-			gpios = <&gpio 36 GPIO_ACTIVE_LOW>;
+			gpios = <&gpio1 4 GPIO_ACTIVE_LOW>;
 		};
 	};
 };
@@ -44,3 +46,29 @@
 		};
 	};
 };
+
+&pinctrl {
+	spim3_default: spim3_default {
+		group1 {
+			pinmux = <SPIM3_MISO_GPIO19>,
+				 <SPIM3_MOSI_GPIO23>,
+				 <SPIM3_SCLK_GPIO18>;
+		};
+	};
+};
+
+&spi3 {
+	status = "okay";
+	pinctrl-0 = <&spim3_default>;
+	pinctrl-names = "default";
+	cs-gpios = <&gpio0 5 GPIO_ACTIVE_LOW>;
+
+	mfrc522: mfrc522@0 {
+		compatible = "nxp,mfrc522";
+		reg = <0>;
+		spi-max-frequency = <5000000>;
+		reset-gpios = <&gpio0 4 GPIO_ACTIVE_LOW>;
+		status = "okay";
+	};
+};
+

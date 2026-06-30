@@ -9,7 +9,7 @@
 #include <zephyr/zbus/zbus.h>
 
 #include "drivers/mfrc522/mfrc522_chan.h"
-#include "services/rfid/rfid.h"
+#include "services/rfid.h"
 
 LOG_MODULE_REGISTER(rfid_svc, CONFIG_LOG_DEFAULT_LEVEL);
 

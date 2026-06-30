@@ -7,29 +7,37 @@
  *  ████  █  █ ███ █  █  █  ████ ████ ███
  *
  ********************************************************************
- * @file main.c
+ * @file rfid.h
  *
- * @brief Implements the scheduling management service for the workstation.
+ * @brief Define the RFID management service for the workstation.
  * @author João Matheus Nascimento Dias (joao.dias@edge.ufal.br)
  * @version 0.1
- * @date 22/06/2026
+ * @date 24/06/2026
  *
  * @copyright Copyright (c) 2026
  *
  *******************************************************************/
 
-#include <string.h>
+#ifndef SERVICE_RFID_H_
+#define SERVICE_RFID_H_
 
-#include <zephyr/device.h>
-#include <zephyr/devicetree.h>
-#include <zephyr/drivers/sensor.h>
-#include <zephyr/kernel.h>
-#include <zephyr/logging/log.h>
+#include <stdint.h>
+#include <zephyr/zbus/zbus.h>
+#include "drivers/mfrc522/mfrc522_chan.h"
 
-LOG_MODULE_REGISTER(main, CONFIG_MAIN_LOG_LEVEL);
+/**
+ * @brief RFID event message structure.
+ * 
+ */
+struct rfid_event {
+	uint8_t uid_bytes[MFRC522_UID_MAX_LEN]; /**< UID bytes */
+	uint8_t uid_len; /**< Length of the UID in bytes */
+};
 
-int main(void)
-{
+/**
+ * @brief Construct a new zbus chan declare object
+ * 
+ */
+ZBUS_CHAN_DECLARE(rfid_tag_chan);
 
-	return 0;
-}
+#endif /* SERVICE_RFID_H_ */
