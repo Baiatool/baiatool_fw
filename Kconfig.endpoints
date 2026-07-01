@@ -6,6 +6,10 @@ module = CONFIRM_SCHEDULE_ENDPOINT
 module-str = confirm_schedule_endpoint
 source "subsys/logging/Kconfig.template.log_config"
 
+module = CHECKOUT_ENDPOINT
+module-str = checkout_endpoint
+source "subsys/logging/Kconfig.template.log_config"
+
 menu "Endpoints"
     config HTTP_RECV_BUF_SIZE
         int "Size for receive buffer in HTTP response"
