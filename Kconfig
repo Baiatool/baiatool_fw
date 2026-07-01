@@ -11,6 +11,7 @@ rsource "Kconfig.led"
 rsource "Kconfig.button"
 rsource "Kconfig.settings"
 rsource "Kconfig.rfid"
+rsource "Kconfig.id_manager"
 
 module = MAIN
 module-str = main

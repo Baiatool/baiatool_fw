@@ -18,8 +18,22 @@ menu "Endpoints"
     config HTTP_RECV_BUF_SIZE
         int "Size for receive buffer in HTTP response"
         default 512
-    
+
     config HTTP_BODY_BUF_SIZE
         int "Size of HTTP body response"
         default 256
+
+    config SERVER_HOST
+        string "Baiatool server hostname"
+        default "192.0.2.1"
+        help
+            Mocked placeholder until the real server address is defined.
+            Used by the id_manager to open sockets autonomously (without a
+            shell command providing host/port).
+
+    config SERVER_PORT
+        string "Baiatool server port"
+        default "80"
+        help
+            Mocked placeholder until the real server address is defined.
 endmenu

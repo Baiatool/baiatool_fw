@@ -1,0 +1,51 @@
+module = ID_MANAGER
+module-str = id_manager
+source "subsys/logging/Kconfig.template.log_config"
+
+menu "ID manager"
+    config ID_MANAGER_LONG_TAP_MS
+        int "Minimum duration in ms for a tap to count as a long tap"
+        default 2000
+        help
+            Minimum time an RFID tag must stay present on the reader for the
+            tap to be treated as a checkout (long tap) instead of a
+            confirm/extend (short tap).
+
+    config ID_MANAGER_MIN_USE_BEFORE_EXTEND_MIN
+        int "Minimum minutes of use before an extend tap is accepted"
+        default 60
+        help
+            A short tap while the workstation is in FIRST_USE is only
+            accepted as an extend once this many minutes have passed since
+            start_time.
+
+    config ID_MANAGER_CONFIRM_TIMEOUT_MIN
+        int "Minutes to wait for a confirmation tap after a schedule is loaded"
+        default 5
+        help
+            If no confirm tap happens within this many minutes after a
+            SCHEDULE_CMD_LOAD, the id_manager automatically checks out the
+            pending reservation, freeing the queue.
+
+    config ID_MANAGER_FETCH_INTERVAL_SEC
+        int "Seconds between periodic schedule fetches"
+        default 60
+        help
+            Interval between GET /api/schedule polls performed by the
+            id_manager thread.
+
+    config ID_MANAGER_SUB_QUEUE_SIZE
+        int "id_manager zbus subscriber queue size"
+        default 4
+        help
+            Number of pending zbus notifications the id_manager subscriber
+            can hold before older ones are dropped.
+
+    config ID_MANAGER_THREAD_STACK_SIZE
+        int "id_manager thread stack size"
+        default 2048
+
+    config ID_MANAGER_THREAD_PRIORITY
+        int "id_manager thread priority"
+        default 5
+endmenu
