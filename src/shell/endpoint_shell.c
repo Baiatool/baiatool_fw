@@ -20,9 +20,9 @@
 
 #if CONFIG_SHELL_ENDPOINT
 
+#include "endpoints/confirm_schedule.h"
 #include "endpoints/schedule.h"
 
-#include <errno.h>
 #include <zephyr/net/net_ip.h>
 #include <zephyr/net/socket.h>
 #include <zephyr/shell/shell.h>
@@ -89,9 +89,36 @@ static int cmd_fetch_schedule(const struct shell *sh, size_t argc, char **argv)
 	return 0;
 }
 
+static int cmd_confirm_schedule(const struct shell *sh, size_t argc, char **argv)
+{
+	const char *host = argv[1];
+	const char *port = argv[2];
+	int sock;
+	int ret;
+
+	sock = connect_to_host(sh, host, port);
+	if (sock < 0) {
+		return sock;
+	}
+
+	ret = confirm_schedule_endpoint_post(sock, host, port);
+
+	(void)zsock_close(sock);
+
+	if (ret < 0) {
+		shell_error(sh, "confirm_schedule failed: %d", ret);
+		return ret;
+	}
+
+	shell_print(sh, "confirm_schedule OK");
+	return 0;
+}
+
 SHELL_STATIC_SUBCMD_SET_CREATE(endpoint_cmds,
 			       SHELL_CMD_ARG(fetch_schedule, NULL, "<host> <port>",
 					     cmd_fetch_schedule, 3, 0),
+			       SHELL_CMD_ARG(confirm_schedule, NULL, "<host> <port>",
+					     cmd_confirm_schedule, 3, 0),
 			       SHELL_SUBCMD_SET_END);
 
 SHELL_CMD_REGISTER(endpoint, &endpoint_cmds, "Endpoint commands", NULL);
