@@ -23,7 +23,6 @@
 #include "endpoints/confirm_schedule.h"
 #include "endpoints/schedule.h"
 
-#include <errno.h>
 #include <zephyr/net/net_ip.h>
 #include <zephyr/net/socket.h>
 #include <zephyr/shell/shell.h>
