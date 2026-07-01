@@ -22,4 +22,10 @@ menu "RFID service"
         default 10
         help
             Set the maximum length for the MFRC522 UID.
-endmenu 
+
+    config RFID_POLL_INTERVAL_MS
+        int "RFID poll interval in milliseconds."
+        default 200
+        help
+            Delay between successive sensor_sample_fetch() calls in the RFID thread loop.
+endmenu
