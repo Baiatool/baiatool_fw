@@ -20,6 +20,7 @@
 
 #include "components/storage.h"
 #include "services/schedule.h"
+#include "services/sntp.h"
 
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
@@ -64,7 +65,9 @@ static void schedule_chan_listener(const struct zbus_channel *chan)
 
 	switch (msg->cmd_id) {
 
-	case SCHEDULE_CMD_FIRST_USE:
+	case SCHEDULE_CMD_FIRST_USE: {
+		struct sntp_service_time_msg time_msg;
+
 		if (memcmp(msg->user_id, empty_id, CONFIG_MAX_ID_LENGTH) == 0) {
 			LOG_ERR("User ID cannot be NULL");
 			goto finish;
@@ -77,18 +80,23 @@ static void schedule_chan_listener(const struct zbus_channel *chan)
 			goto finish;
 		}
 
+		if (zbus_chan_read(&sntp_time_chan, &time_msg, K_MSEC(100)) != 0 ||
+		    !time_msg.valid) {
+			LOG_ERR("Cannot confirm FIRST_USE: SNTP time not available yet");
+			goto finish;
+		}
+
 		LOG_INF("Received FIRST_USE command from user ID: %s", msg->user_id);
-		state->start_time =
-			0; /* TODO @Jota: Pegar a hora atual no serviço de data e hora */
+		state->start_time = (time_t)time_msg.unix_time_s;
 		state->end_time =
-			CONFIG_SCHEDULE_FIRST_USE_TIMEOUT_MINUTES; /* TODO @Jota: Pegar a hora final
-								      n o serviço de data e hora */
+			state->start_time + (CONFIG_SCHEDULE_FIRST_USE_TIMEOUT_MINUTES * 60);
 		state->last_cmd = SCHEDULE_CMD_FIRST_USE;
 
 		memcpy(state->user_id, msg->user_id, CONFIG_MAX_ID_LENGTH);
 		changed = true;
 
 		goto finish;
+	}
 
 	case SCHEDULE_CMD_EXTEND_TIME:
 		if (state->last_cmd != SCHEDULE_CMD_FIRST_USE) {
@@ -105,9 +113,7 @@ static void schedule_chan_listener(const struct zbus_channel *chan)
 			break;
 		}
 
-		state->end_time +=
-			CONFIG_SCHEDULE_EXTEND_TIMEOUT_MINUTES; /* TODO @Jota: Pegar a hora final no
-								   serviço de data e hora */
+		state->end_time += (CONFIG_SCHEDULE_EXTEND_TIMEOUT_MINUTES * 60);
 		state->last_cmd = SCHEDULE_CMD_EXTEND_TIME;
 		changed = true;
 

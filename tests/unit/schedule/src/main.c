@@ -2,9 +2,11 @@
 #include <zephyr/ztest.h>
 
 #include "services/schedule.h"
+#include "services/sntp.h"
 
-#define USER_A "ana_001"
-#define USER_B "bob_002"
+#define USER_A         "ana_001"
+#define USER_B         "bob_002"
+#define TEST_UNIX_TIME 1750000000
 
 static const struct baiatool_schedule_state k_idle = {
 	.user_id = {0},
@@ -13,9 +15,22 @@ static const struct baiatool_schedule_state k_idle = {
 	.end_time = 0,
 };
 
+/* schedule.c depends on sntp_time_chan for real timestamps; this test defines
+ * its own stub instead of linking the real sntp service (which pulls in
+ * networking and wifi_state_chan).
+ */
+ZBUS_CHAN_DEFINE(sntp_time_chan, struct sntp_service_time_msg, NULL, NULL, ZBUS_OBSERVERS_EMPTY,
+		 ZBUS_MSG_INIT(.unix_time_s = 0, .valid = false));
+
 static void before_each(void *fixture)
 {
+	struct sntp_service_time_msg time_msg = {
+		.unix_time_s = TEST_UNIX_TIME,
+		.valid = true,
+	};
+
 	ARG_UNUSED(fixture);
+	zbus_chan_pub(&sntp_time_chan, &time_msg, K_MSEC(100));
 	zbus_chan_pub(&schedule_state_chan, &k_idle, K_MSEC(100));
 }
 
@@ -51,8 +66,10 @@ ZTEST(schedule, test_first_use_sets_state)
 
 	zassert_equal(s.last_cmd, SCHEDULE_CMD_FIRST_USE, "expected FIRST_USE, got %d", s.last_cmd);
 	zassert_mem_equal(s.user_id, USER_A, strlen(USER_A), "user_id mismatch after FIRST_USE");
-	zassert_equal(s.end_time, CONFIG_SCHEDULE_FIRST_USE_TIMEOUT_MINUTES,
-		      "end_time should equal FIRST_USE timeout, got %d", (int)s.end_time);
+	zassert_equal(s.start_time, TEST_UNIX_TIME,
+		      "start_time should come from sntp_time_chan, got %d", (int)s.start_time);
+	zassert_equal(s.end_time, TEST_UNIX_TIME + (CONFIG_SCHEDULE_FIRST_USE_TIMEOUT_MINUTES * 60),
+		      "end_time should be start_time + FIRST_USE timeout, got %d", (int)s.end_time);
 }
 
 ZTEST(schedule, test_first_use_rejects_empty_user_id)
@@ -63,6 +80,21 @@ ZTEST(schedule, test_first_use_rejects_empty_user_id)
 	get_state(&s);
 
 	zassert_equal(s.last_cmd, SCHEDULE_CMD_END_USE, "state should remain idle, got last_cmd=%d",
+		      s.last_cmd);
+}
+
+ZTEST(schedule, test_first_use_rejects_without_sntp_sync)
+{
+	struct baiatool_schedule_state s;
+	struct sntp_service_time_msg unsynced = {.unix_time_s = 0, .valid = false};
+
+	zbus_chan_pub(&sntp_time_chan, &unsynced, K_MSEC(100));
+
+	pub_cmd(SCHEDULE_CMD_FIRST_USE, USER_A);
+	get_state(&s);
+
+	zassert_equal(s.last_cmd, SCHEDULE_CMD_END_USE,
+		      "FIRST_USE without SNTP sync should be rejected, got last_cmd=%d",
 		      s.last_cmd);
 }
 
@@ -94,9 +126,9 @@ ZTEST(schedule, test_extend_time_increases_end_time)
 
 	zassert_equal(s.last_cmd, SCHEDULE_CMD_EXTEND_TIME, "expected EXTEND_TIME, got %d",
 		      s.last_cmd);
-	zassert_equal(s.end_time, end_after_first + CONFIG_SCHEDULE_EXTEND_TIMEOUT_MINUTES,
+	zassert_equal(s.end_time, end_after_first + (CONFIG_SCHEDULE_EXTEND_TIMEOUT_MINUTES * 60),
 		      "end_time not extended correctly: got %d, want %d", (int)s.end_time,
-		      (int)(end_after_first + CONFIG_SCHEDULE_EXTEND_TIMEOUT_MINUTES));
+		      (int)(end_after_first + (CONFIG_SCHEDULE_EXTEND_TIMEOUT_MINUTES * 60)));
 }
 
 ZTEST(schedule, test_extend_time_rejects_wrong_user)

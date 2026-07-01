@@ -114,5 +114,6 @@ YAMLLint.txt
 
 CLAUDE*
 .claude*
+/docs
 
 __pycache__/*
