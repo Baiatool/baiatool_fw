@@ -113,6 +113,27 @@ ZTEST(schedule, test_extend_time_rejects_wrong_user)
 			  "user_id should be unchanged after rejected extend");
 }
 
+ZTEST(schedule, test_extend_time_rejects_second_extend)
+{
+	struct baiatool_schedule_state s;
+	time_t end_after_extend;
+
+	pub_cmd(SCHEDULE_CMD_FIRST_USE, USER_A);
+	pub_cmd(SCHEDULE_CMD_EXTEND_TIME, USER_A);
+	get_state(&s);
+	end_after_extend = s.end_time;
+
+	pub_cmd(SCHEDULE_CMD_EXTEND_TIME, USER_A);
+	get_state(&s);
+
+	zassert_equal(s.last_cmd, SCHEDULE_CMD_EXTEND_TIME,
+		      "second extend should be rejected, last_cmd changed unexpectedly: %d",
+		      s.last_cmd);
+	zassert_equal(s.end_time, end_after_extend,
+		      "second extend should be rejected, end_time changed: got %d, want %d",
+		      (int)s.end_time, (int)end_after_extend);
+}
+
 ZTEST(schedule, test_extend_time_rejects_without_session)
 {
 	struct baiatool_schedule_state s;

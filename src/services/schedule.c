@@ -91,9 +91,8 @@ static void schedule_chan_listener(const struct zbus_channel *chan)
 		goto finish;
 
 	case SCHEDULE_CMD_EXTEND_TIME:
-		if (state->last_cmd == SCHEDULE_CMD_END_USE) {
-			LOG_ERR("Last command is not FIRST_USE or EXTEND_TIME: %d",
-				state->last_cmd);
+		if (state->last_cmd != SCHEDULE_CMD_FIRST_USE) {
+			LOG_ERR("Extend is only allowed once, from FIRST_USE: %d", state->last_cmd);
 
 			goto finish;
 		}
