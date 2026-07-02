@@ -127,6 +127,7 @@ class ScheduleStore:
 
 
 store = ScheduleStore()
+last_diagnostic = None
 
 
 @app.get("/")
@@ -209,6 +210,20 @@ def api_extend():
     body = request.get_json(silent=True) or {}
     s = store.extend(body.get("user_id", ""))
     return jsonify(store.to_firmware_json(s))
+
+
+@app.post("/api/diagnostic")
+def api_diagnostic_post():
+    global last_diagnostic
+    last_diagnostic = request.get_json(silent=True) or {}
+    return "", 204
+
+
+@app.get("/api/diagnostic")
+def api_diagnostic_get():
+    if last_diagnostic is None:
+        abort(404)
+    return jsonify(last_diagnostic)
 
 
 if __name__ == "__main__":

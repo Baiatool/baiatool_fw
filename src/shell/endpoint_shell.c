@@ -22,6 +22,7 @@
 
 #include "endpoints/checkout.h"
 #include "endpoints/confirm_schedule.h"
+#include "endpoints/diagnostic.h"
 #include "endpoints/schedule.h"
 
 #include <zephyr/net/net_ip.h>
@@ -140,14 +141,38 @@ static int cmd_checkout(const struct shell *sh, size_t argc, char **argv)
 	return 0;
 }
 
-SHELL_STATIC_SUBCMD_SET_CREATE(endpoint_cmds,
-			       SHELL_CMD_ARG(fetch_schedule, NULL, "<host> <port>",
-					     cmd_fetch_schedule, 3, 0),
-			       SHELL_CMD_ARG(confirm_schedule, NULL, "<host> <port>",
-					     cmd_confirm_schedule, 3, 0),
-			       SHELL_CMD_ARG(checkout, NULL, "<host> <port>",
-					     cmd_checkout, 3, 0),
-			       SHELL_SUBCMD_SET_END);
+static int cmd_diagnostic(const struct shell *sh, size_t argc, char **argv)
+{
+	const char *host = argv[1];
+	const char *port = argv[2];
+	int sock;
+	int ret;
+
+	sock = connect_to_host(sh, host, port);
+	if (sock < 0) {
+		return sock;
+	}
+
+	ret = diagnostic_endpoint_post(sock, host, port);
+
+	(void)zsock_close(sock);
+
+	if (ret < 0) {
+		shell_error(sh, "diagnostic failed: %d", ret);
+		return ret;
+	}
+
+	shell_print(sh, "diagnostic OK");
+	return 0;
+}
+
+SHELL_STATIC_SUBCMD_SET_CREATE(
+	endpoint_cmds,
+	SHELL_CMD_ARG(fetch_schedule, NULL, "<host> <port>", cmd_fetch_schedule, 3, 0),
+	SHELL_CMD_ARG(confirm_schedule, NULL, "<host> <port>", cmd_confirm_schedule, 3, 0),
+	SHELL_CMD_ARG(checkout, NULL, "<host> <port>", cmd_checkout, 3, 0),
+	SHELL_CMD_ARG(diagnostic, NULL, "<host> <port>", cmd_diagnostic, 3, 0),
+	SHELL_SUBCMD_SET_END);
 
 SHELL_CMD_REGISTER(endpoint, &endpoint_cmds, "Endpoint commands", NULL);
 

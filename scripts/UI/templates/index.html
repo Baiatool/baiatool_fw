@@ -14,7 +14,20 @@
   <header>
     <span class="logo">Baiatool</span>
     <span class="subtitle">Workstation Scheduler</span>
+    <button class="diag-btn" onclick="openDiagnostic()">Diagnostic</button>
   </header>
+
+  <div class="modal-overlay" id="diag-modal" onclick="closeDiagnostic()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <span>Device Diagnostic</span>
+        <button class="modal-close" onclick="closeDiagnostic()">&#x2715;</button>
+      </div>
+      <div class="modal-body" id="diag-body">
+        <p class="idle">Loading&hellip;</p>
+      </div>
+    </div>
+  </div>
 
   <main>
 
@@ -185,6 +198,33 @@
     }
 
     setInterval(poll, 10000);
+
+    const LAST_CMD_NAMES = ["first_use", "extend_time", "end_use", "load"];
+
+    function openDiagnostic() {
+      document.getElementById('diag-modal').style.display = 'flex';
+      document.getElementById('diag-body').innerHTML = '<p class="idle">Loading&hellip;</p>';
+      fetch('/api/diagnostic')
+        .then(r => {
+          if (!r.ok) throw new Error(r.status);
+          return r.json();
+        })
+        .then(d => {
+          document.getElementById('diag-body').innerHTML = `
+            <div class="diag-row"><span class="label">SSID</span><span class="mono">${d.ssid ?? '—'}</span></div>
+            <div class="diag-row"><span class="label">User ID</span><span class="mono">${d.user_id ?? '—'}</span></div>
+            <div class="diag-row"><span class="label">Last command</span><span>${LAST_CMD_NAMES[d.last_cmd] ?? d.last_cmd}</span></div>
+            <div class="diag-row"><span class="label">Start time</span><span class="mono">${d.start_time}</span></div>
+            <div class="diag-row"><span class="label">End time</span><span class="mono">${d.end_time}</span></div>`;
+        })
+        .catch(() => {
+          document.getElementById('diag-body').innerHTML = '<p class="idle">No diagnostic data received yet.</p>';
+        });
+    }
+
+    function closeDiagnostic() {
+      document.getElementById('diag-modal').style.display = 'none';
+    }
   </script>
 
 </body>

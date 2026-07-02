@@ -10,6 +10,10 @@ module = CHECKOUT_ENDPOINT
 module-str = checkout_endpoint
 source "subsys/logging/Kconfig.template.log_config"
 
+module = DIAGNOSTIC_ENDPOINT
+module-str = diagnostic_endpoint
+source "subsys/logging/Kconfig.template.log_config"
+
 menu "Endpoints"
     config HTTP_RECV_BUF_SIZE
         int "Size for receive buffer in HTTP response"
