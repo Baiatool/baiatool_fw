@@ -31,4 +31,10 @@ menu "Settings and shell modules"
         default n
         help
             Enable shell commands for manually triggering HTTP endpoint functions.
+
+    config SHELL_DISPLAY
+        bool "Enable display shell commands"
+        default n
+        help
+            Enable shell commands to switch display screens manually.
 endmenu

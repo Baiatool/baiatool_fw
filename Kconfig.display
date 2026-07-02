@@ -1,0 +1,32 @@
+module = DISPLAY_SERVICE
+module-str = display_service
+source "subsys/logging/Kconfig.template.log_config"
+
+menu "Display service"
+
+    config DISPLAY_SERVICE_CMD_SUB_QUEUE_SIZE
+        int "Display command subscriber queue size"
+        default 4
+
+    config DISPLAY_SERVICE_WARNING_MSG_MAX_LEN
+        int "Max warning message length in bytes"
+        default 64
+
+    config DISPLAY_SERVICE_THREAD_STACK_SIZE
+        int "Display service thread stack size"
+        default 8192
+        help
+          Stack must accommodate LVGL rendering + snprintf buffers.
+
+    config DISPLAY_SERVICE_THREAD_PRIORITY
+        int "Display service thread priority"
+        default 6
+
+    config DISPLAY_SERVICE_LVGL_PERIOD_MS
+        int "LVGL timer handler period in milliseconds"
+        default 20
+        help
+          Period at which lv_timer_handler() is called when no zbus
+          event arrives. Controls UI animation / refresh rate.
+
+endmenu

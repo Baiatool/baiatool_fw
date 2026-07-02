@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.20.0)
 #   esp32c6_devkitc/esp32c6/hpcore  (default)
 #   esp32_devkitc/esp32/procpu
 if(NOT DEFINED BOARD)
-  set(BOARD esp32c6_devkitc/esp32c6/hpcore)
+  set(BOARD esp32c6_devkitc/esp32c6/hpcore )
 endif()
 
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
@@ -14,6 +14,15 @@ project(baiatool)
 file(GLOB_RECURSE SOURCE_FILES
     ${CMAKE_CURRENT_LIST_DIR}/src/*.c
 )
+
+if(NOT CONFIG_LVGL)
+    list(FILTER SOURCE_FILES EXCLUDE REGEX ".*/services/display\\.c$")
+    list(FILTER SOURCE_FILES EXCLUDE REGEX ".*/assets/logo_baiatool\\.c$")
+endif()
+
+if(NOT CONFIG_RFID_SERVICE)
+    list(FILTER SOURCE_FILES EXCLUDE REGEX ".*/services/rfid\\.c$")
+endif()
 
 target_sources(app PRIVATE ${SOURCE_FILES})
 
